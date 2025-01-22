@@ -6,3 +6,5 @@ license.workspace = true
 keywords.workspace = true
 
 [dependencies]
+rand = {workspace = true}
+rsa = {workspace = true}

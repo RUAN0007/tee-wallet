@@ -8,11 +8,17 @@ use crate::{
         attestation_server::AttestationServer
         , AttestationHandler},
 };
+use utils::crypto::init_rsa_keypair;
+use rsa::{RsaPrivateKey, RsaPublicKey};
+use once_cell::sync::Lazy;
+
+pub static RSA_KEYPAIR: Lazy<(RsaPrivateKey, RsaPublicKey)> = Lazy::new(|| init_rsa_keypair());
 
 pub async fn start(cfg : SigServerConfig) -> Result<(), SigServerError> {
     tracing::info!(
-        "start to launch the sig server with config: {:?}",
-        cfg
+        "start to launch the sig server with config: {:?} and pub key {:?}",
+        cfg,
+        RSA_KEYPAIR.1 // TODO: 
     );
 
     let addr = "[::1]:50051".parse().unwrap();

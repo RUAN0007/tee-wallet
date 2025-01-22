@@ -6,9 +6,10 @@ service Attestation {
 }
 
 message AttestationReq {
+    bytes nonce = 1;
 }
 
 message AttestationResp {
     bytes doc = 1;
-	uint32 delay_ms = 2;
+	uint64 delay_ms = 2;
 }

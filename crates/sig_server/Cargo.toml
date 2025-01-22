@@ -5,8 +5,10 @@ edition = "2021"
 
 [dependencies]
 trace={path="../trace"}
+utils={path="../utils"}
 
 serde = { workspace = true }
+serde_bytes = { workspace = true }
 config = { workspace = true }
 clap = { workspace = true }
 thiserror = { workspace = true }
@@ -15,6 +17,11 @@ tonic = {workspace = true}
 prost = {workspace = true}
 tokio = {workspace = true}
 once_cell={workspace = true}
+aws-nitro-enclaves-nsm-api = {workspace = true}
+bytes = {workspace = true}
+ed25519-dalek = {workspace = true}
+rand = {workspace = true}
+rsa = {workspace = true}
 
 [build-dependencies]
 tonic-build = {workspace = true}
