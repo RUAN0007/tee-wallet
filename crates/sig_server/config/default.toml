@@ -1,0 +1,9 @@
+[grpc]
+vsock_port = 50001
+
+[trace]
+prefix = "sig_server"
+dir = "logs/"
+level = "info"
+console = true
+flame = false

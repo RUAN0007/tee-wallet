@@ -1,0 +1,22 @@
+[package]
+name = "trace"
+description = "tracing"
+version = {workspace=true}
+
+readme = "README.md"
+edition = "2021"
+
+[features]
+default = []
+
+[dependencies]
+thiserror = {workspace = true}
+serde_json = {workspace = true}
+serde = {workspace = true}
+tracing = {workspace = true}
+async-trait = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-appender = "0.2"
+tracing-flame = "0.2"
+tracing-opentelemetry = "0.17"
+opentelemetry = { version = "0.17", features = ["serialize"]}
