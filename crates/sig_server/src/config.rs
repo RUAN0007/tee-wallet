@@ -4,7 +4,8 @@ use trace::TraceConfig;
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct GrpcConfig {
-    pub vsock_port: u64,
+    pub vsock_port: Option<u64>,
+    pub tcp_port : Option<u64>,
 }
 
 #[derive(Debug, Clone, Deserialize)]

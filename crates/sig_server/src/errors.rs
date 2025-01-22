@@ -5,4 +5,6 @@ use thiserror::Error;
 pub enum SigServerError {
     #[error("config error: {0}")]
     ConfigError(#[from] ConfigError),
+    #[error("grpc server error: {0}")]
+    ServerError(#[from] tonic::transport::Error),
 }

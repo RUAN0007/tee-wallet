@@ -1,0 +1,14 @@
+syntax = "proto3";
+package attestation;
+
+service Attestation {
+    rpc GetAttestationDoc (AttestationReq) returns (AttestationResp);
+}
+
+message AttestationReq {
+}
+
+message AttestationResp {
+    bytes doc = 1;
+	uint32 delay_ms = 2;
+}
