@@ -28,6 +28,7 @@ tracing = "0.1"
 tonic = "*"
 prost = "0.13"
 tokio = { version = "1.0", features = ["macros", "rt-multi-thread"] }
+tokio-stream = "0.1.17"
 tonic-build = "*"
 aws-nitro-enclaves-nsm-api = "0.4.0"
 bytes = "1.1"

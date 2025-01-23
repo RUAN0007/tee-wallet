@@ -7,4 +7,10 @@ pub enum SigServerError {
     ConfigError(#[from] ConfigError),
     #[error("grpc server error: {0}")]
     ServerError(#[from] tonic::transport::Error),
+    #[error("vsock proxy error: {0}")]
+    VSockProxyError(String),
+    #[error("tcp proxy error: {0}")]
+    TcpProxyError(String),
+    #[error("listener loop joining error: {0}")]
+    ListenerJoinError(#[from] tokio::task::JoinError),
 }

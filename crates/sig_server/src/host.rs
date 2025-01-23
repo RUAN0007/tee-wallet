@@ -1,0 +1,75 @@
+use std::result::Result;
+use crate::{
+    errors::SigServerError,
+    config::SigServerConfig,
+};
+ 
+
+#[cfg(target_os = "linux")]
+pub async fn start(cfg : SigServerConfig) -> Result<(), SigServerError> {
+    tracing::info!(
+        "start to launch the sig server on host with config: {:?}",
+        cfg,
+    );
+
+    // iterate over the vsock_proxies and start the vsock proxy
+    let mut proxies = tokio::task::JoinSet::new();
+    let num_workers = 1;
+
+    for vsock_proxy_config in cfg.host.vsock_proxies.iter() {
+        let local_port = vsock_proxy_config.local_vsock_port;
+        let remote_host = vsock_proxy_config.remote_host.clone();
+        let remote_port = vsock_proxy_config.remote_port;
+
+        let ip_addr_type = proxy::IpAddrType::IPAddrMixed;
+
+        let mut vsock_proxy = proxy::vsock::VsockProxy::new(local_port, remote_host.clone(), remote_port, num_workers, ip_addr_type).map_err(|e| SigServerError::VSockProxyError(e))?;
+        let listener = vsock_proxy.listen().map_err(|e| SigServerError::VSockProxyError(e))?;
+        tracing::info!("Starting vsock proxy with local_port: {}, remote_host: {}, remote_port: {}", local_port, remote_host, remote_port);
+
+        proxies.spawn(async move {
+            loop {
+                match vsock_proxy.accept(&listener) {
+                    Ok(_) => {
+                        tracing::info!("Accepted vsock connection on proxy {:?}", vsock_proxy);
+                    },
+                    Err(e) => {
+                        tracing::error!("Error accepting vsock connection on proxy {:?}: {:?}", vsock_proxy, e);
+                    }
+                }
+            }
+        });
+    }
+
+    let tcp_port = cfg.host.listen_port;
+    let cid = cfg.enclave.cid;
+    let vsock_port = cfg.enclave.grpc.port;
+
+    let mut tcp_proxy = proxy::tcp::TcpProxy::new(tcp_port, cid, vsock_port, num_workers).map_err(|e| SigServerError::TcpProxyError(e))?;
+
+    proxies.spawn(async move {
+        let listener = tcp_proxy.listen().map_err(|e| SigServerError::TcpProxyError(e)).unwrap();
+        tracing::info!("Starting tcp proxy with local_port: {}, remote cid: {}, remote vsock port: {}", tcp_port, cid, vsock_port);
+        loop {
+            match tcp_proxy.accept(&listener) {
+                Ok(_) => {
+                    tracing::info!("Accepted tcp connection on proxy {:?}", tcp_proxy);
+                },
+                Err(e) => {
+                    tracing::error!("Error accepting tcp connection on proxy {:?}: {:?}", tcp_proxy, e);
+                }
+            }
+        }
+    });
+
+    // wait for all the proxies to finish, which shall never happen
+    while let Some(res) = proxies.join_next().await {
+        _ = res?;
+    }
+
+    return Ok(());
+}
+#[cfg(not(target_os = "linux"))]
+pub async fn start(_cfg : SigServerConfig) -> Result<(), SigServerError> {
+    panic!("Unsupported OS");
+}

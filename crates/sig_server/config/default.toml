@@ -1,5 +1,31 @@
-[grpc]
-vsock_port = 50001
+[enclave]
+cid = 10
+
+[enclave.grpc]
+port = 50001
+
+[[enclave.tcp_proxies]]
+local_tcp_port = 7000
+remote_cid = 3
+remote_port = 8000
+
+[[enclave.tcp_proxies]]
+local_tcp_port = 7001
+remote_cid = 4
+remote_port = 8001
+
+[host]
+listen_port = 9000
+
+[[host.vsock_proxies]]
+local_vsock_port = 9001
+remote_host = "example.com"
+remote_port = 8080
+
+[[host.vsock_proxies]]
+local_vsock_port = 9002
+remote_host = "another-example.com"
+remote_port = 8081
 
 [trace]
 prefix = "sig_server"

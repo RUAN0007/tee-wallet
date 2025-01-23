@@ -6,6 +6,7 @@ use vsock::{VsockAddr, VsockStream};
 use crate::{ProxyResult, traffic::duplex_forward};
 
 /// Configuration parameters for port listening and remote destination
+#[derive(Clone, Debug)]
 pub struct TcpProxy {
     local_port: u16,
     remote_cid: u32,

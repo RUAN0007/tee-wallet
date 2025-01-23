@@ -15,12 +15,13 @@ pub const VSOCK_HOST_CID: u32 = 3; // according to https://docs.aws.amazon.com/e
 pub const VSOCK_PROXY_PORT: u32 = 8000;
 
 /// Configuration parameters for port listening and remote destination
+#[derive(Clone, Debug)]
 pub struct VsockProxy {
     local_port: u32,
     remote_host: String,
     remote_port: u16,
     dns_resolution_info: Option<DnsResolutionInfo>,
-    pool: ThreadPool,
+    pool: ThreadPool, // TODO: Use tokio instead of threadpool
     ip_addr_type: IpAddrType,
 }
 

@@ -3,14 +3,42 @@ use config::{Config, ConfigError, File};
 use trace::TraceConfig;
 
 #[derive(Debug, Clone, Deserialize)]
+pub struct EnclaveConfig {
+    pub grpc: GrpcConfig,
+    pub cid : u32,
+    pub tcp_proxies: Vec<TcpProxyConfig>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct HostConfig {
+    pub vsock_proxies: Vec<VsockProxyConfig>,
+    pub grpc_proxy: TcpProxyConfig,
+    pub listen_port : u16,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct TcpProxyConfig {
+    pub local_tcp_port : u16,
+    pub remote_cid : u32,
+    pub remote_port : u32,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct VsockProxyConfig {
+    pub local_vsock_port : u32,
+    pub remote_host : String,
+    pub remote_port : u16,
+}
+
+#[derive(Debug, Clone, Deserialize)]
 pub struct GrpcConfig {
-    pub vsock_port: Option<u64>,
-    pub tcp_port : Option<u64>,
+    pub port: u32,
 }
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct SigServerConfig {
-    pub grpc: GrpcConfig,
+    pub enclave: EnclaveConfig,
+    pub host: HostConfig,
 	pub trace: TraceConfig,
 }
 

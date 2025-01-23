@@ -3,7 +3,7 @@ pub mod tcp;
 pub mod dns;
 mod traffic;
 
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Debug)]
 pub enum IpAddrType {
     /// Only allows IP4 addresses
     IPAddrV4Only,
