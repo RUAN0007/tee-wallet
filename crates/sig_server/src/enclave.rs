@@ -12,7 +12,7 @@ use utils::crypto::init_rsa_keypair;
 use rsa::{RsaPrivateKey, RsaPublicKey};
 use once_cell::sync::Lazy;
 
-pub static RSA_KEYPAIR: Lazy<(RsaPrivateKey, RsaPublicKey)> = Lazy::new(|| init_rsa_keypair());
+pub static RSA_KEYPAIR: Lazy<(RsaPrivateKey, RsaPublicKey)> = Lazy::new(|| init_rsa_keypair()); // TODO: use nitro SDK to seed the keypair for stronger security
 
 pub async fn start(cfg : SigServerConfig) -> Result<(), SigServerError> {
     tracing::info!(

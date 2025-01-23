@@ -1,0 +1,20 @@
+[package]
+name = "proxy"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+keywords.workspace = true
+
+[dependencies]
+chrono = "0.4"
+hickory-resolver = "0.24"
+idna = "1.0.3"
+nix = "0.26"
+threadpool = "1.7.1"
+vsock = "0.3"
+tracing = { workspace = true } 
+
+[dev-dependencies]
+ctor = "0.2.7"
+rand = "0.8.5"
+tempfile = "3.5.0"

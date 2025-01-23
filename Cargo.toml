@@ -1,6 +1,6 @@
 [workspace]
 
-members = [
+members = [ "crates/proxy",
     "crates/sig_server",
 	"crates/trace", 
 	"crates/utils",
