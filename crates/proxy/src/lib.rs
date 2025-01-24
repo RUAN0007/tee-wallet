@@ -5,7 +5,7 @@ pub mod vsock;
 pub mod tcp;
 #[cfg(target_os = "linux")]
 pub mod dns;
-#[cfg(target_os = "linux")]
+
 mod traffic;
 
 #[cfg(target_os = "linux")]

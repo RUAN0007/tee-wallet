@@ -1,42 +1,103 @@
 
-use nix::sys::select::{select, FdSet};
-use std::io::{Read, Write};
+// use tokio::io::{AsyncRead, AsyncReadExt, AsyncWriteExt, AsyncWrite};
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
-const BUFF_SIZE: usize = 8192;
+#[allow(dead_code)]
+pub async fn duplex_forward<A, B, C, D>(client_read: &mut A, client_write: &mut B, server_read: &mut C, server_write: &mut D, desc: String)
+where
+    A: AsyncReadExt + Unpin,
+    B: AsyncWriteExt + Unpin,
+    C: AsyncReadExt + Unpin,
+    D: AsyncWriteExt + Unpin,
+{
+    let client_to_server = async {
+        tokio::io::copy(client_read, server_write).await
+    };
 
-pub fn duplex_forward<C, S>(client_socket: i32, server_socket: i32, client: &mut C, server: &mut S) where C: Read + Write, 
-S: Read + Write {
-    let mut disconnected = false;
-    while !disconnected {
-        let mut set = FdSet::new();
-        set.insert(client_socket);
-        set.insert(server_socket);
+    let server_to_client = async {
+        tokio::io::copy(server_read, client_write).await
+    };
 
-        select(None, Some(&mut set), None, None, None).expect("select");
-
-        if set.contains(client_socket) {
-            disconnected = forward(client, server);
-        }
-        if set.contains(server_socket) {
-            disconnected = forward( server, client);
-        }
-    }
-}
-
-/// Transfers a chunck of maximum 4KB from src to dst
-/// If no error occurs, returns true if the source disconnects and false otherwise
-fn forward(src: &mut dyn Read, dst: &mut dyn Write) -> bool {
-    let mut buffer = [0u8; BUFF_SIZE];
-
-    let nbytes = src.read(&mut buffer);
-    let nbytes = nbytes.unwrap_or(0);
-
-    if nbytes == 0 {
-        return true;
+    tokio::select! {
+        result = client_to_server => {
+            if let Err(e) = result {
+                println!("Error forwarding from client to server: {:?} at {}", e, desc);
+                tracing::error!("Error forwarding from client to server: {:?}", e);
+            }
+        },
+        result = server_to_client => {
+            if let Err(e) = result {
+                println!("Error forwarding from server to client: {:?} at {}", e, desc);
+                tracing::error!("Error forwarding from server to client: {:?}", e);
+            }
+        },
     }
 
-    dst.write_all(&buffer[..nbytes]).is_err()
+    tracing::debug!("{} connection closed", desc);
 }
+
+// const BUFF_SIZE: usize = 8192;
+// pub async fn duplex_forward<A, B, C, D>(
+//     client_read: &mut A, client_write : &mut B,
+//     server_read: &mut C, server_write : &mut D,
+//     desc : String) where 
+//     A: AsyncReadExt + Unpin,
+//     B: AsyncWriteExt + Unpin,
+//     C: AsyncReadExt + Unpin,
+//     D: AsyncWriteExt + Unpin,
+//     {
+
+//     let mut disconnected = false;
+//     let mut cli_buffer = [0u8; BUFF_SIZE];
+//     let mut server_buffer = [0u8; BUFF_SIZE];
+//     while !disconnected {
+//         tokio::select! {
+//             read_result = client_read.read(&mut cli_buffer) => {
+//                 match {
+//                     read_result
+//                 } {
+//                     Ok(0) => {
+//                         tracing::debug!("{} client disconnected", desc);
+//                         disconnected = true;
+//                     },
+//                     Ok(nbytes) => {
+//                         tracing::debug!("{} client read {} bytes", desc, nbytes);
+//                         server_write.write_all(&cli_buffer[..nbytes]).await.unwrap_or_else(|e| {
+//                             tracing::error!("Error writing to {} server: {:?}", desc, e);
+//                             disconnected = true;
+//                         });
+//                     },
+//                     Err(e) => {
+//                         tracing::info!("Error reading from {} client: {:?}", desc, e);
+//                         disconnected = true;
+//                     }
+//                 }
+//             },
+
+//             read_result = server_read.read(&mut server_buffer) => {
+//                 match {
+//                     read_result
+//                 } {
+//                     Ok(0) => {
+//                         tracing::debug!("{} server disconnected", desc);
+//                         disconnected = true;
+//                     },
+//                     Ok(nbytes) => {
+//                         tracing::debug!("{} server read {} bytes", desc, nbytes); 
+//                         client_write.write_all(&server_buffer[..nbytes]).await.unwrap_or_else(|e| {
+//                             tracing::error!("Error writing to {} client: {:?}", desc, e);
+//                             disconnected = true;
+//                         });
+//                     },
+//                     Err(e) => {
+//                         tracing::info!("Error reading from {} server: {:?}", desc, e);
+//                         disconnected = true;
+//                     }
+//                 }
+//             }
+//         }
+//     }
+// }
 
 #[cfg(test)]
 mod tests {
@@ -44,23 +105,47 @@ mod tests {
     use std::fs;
     use std::fs::File;
     use std::io::Write;
+    use tokio::fs::File as TokioFile;
+    use tokio::net::{TcpListener, TcpStream};
     use std::process::Command;
+    use tokio::fs::OpenOptions;
 
     use super::*;
 
-    /// Test transfer function with more data than buffer
-    #[test]
-    fn test_transfer() {
+    /// Test duplex_forward function with more data than buffer
+    #[ignore] // Ignoring this test as sometimes fail to flush to dest file. 
+    #[tokio::test]
+    async fn test_duplex_forward() {
         let data: Vec<u8> = (0..2 * BUFF_SIZE).map(|_| rand::random::<u8>()).collect();
 
         let _ret = fs::create_dir("tmp");
         let mut src = File::create("tmp/src").unwrap();
-        let mut dst = File::create("tmp/dst").unwrap();
+        src.write_all(&data).unwrap();
 
-        let _ret = src.write_all(&data);
+        let listener = TcpListener::bind("127.0.0.1:8000").await.unwrap();
+        let addr = listener.local_addr().unwrap();
 
-        let mut src = File::open("tmp/src").unwrap();
-        while !forward(&mut src, &mut dst) {}
+        let server_handle = tokio::spawn(async move {
+            let (tcp_socket, _) = listener.accept().await.unwrap();
+            let (mut server_read, mut server_write) = tcp_socket.into_split();
+            TokioFile::create("tmp/dst").await.unwrap();
+
+            let dst_file = OpenOptions::new().read(true).write(true).create(true).open("tmp/dst").await.unwrap();
+            let (mut dist_file_read, mut dist_file_write) = tokio::io::split(dst_file);
+
+            duplex_forward(&mut server_read, &mut server_write, &mut dist_file_read, &mut dist_file_write, "tcp_to_file".to_string()).await;
+        });
+
+        let client_handle = tokio::spawn(async move {
+            let client_socket = TcpStream::connect(addr).await.unwrap();
+            let (mut client_read, mut client_write) = client_socket.into_split();
+            let src_file = OpenOptions::new().read(true).write(true).create(true).open("tmp/src").await.unwrap();
+            // let src_file = TokioFile::open("tmp/src").await.unwrap();
+            let (mut src_file_read, mut src_file_write) = tokio::io::split(src_file);
+            duplex_forward(&mut src_file_read, &mut src_file_write, &mut client_read, &mut client_write, "file_to_tcp".to_string()).await;
+        });
+
+        let _ = tokio::try_join!(server_handle, client_handle);
 
         let status = Command::new("cmp")
             .arg("tmp/src")

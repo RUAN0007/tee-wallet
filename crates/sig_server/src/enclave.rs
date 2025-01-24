@@ -22,26 +22,27 @@ pub async fn start(cfg : SigServerConfig) -> Result<(), SigServerError> {
 
     // start the listener first, so that later proxy can connect. 
     let listener = tokio::net::TcpListener::bind(socket_addr).await.unwrap();
-
+    
     #[cfg(target_os = "linux")]
     for tcp_proxy_config in cfg.enclave.tcp_proxies.iter() {
         let local_port = tcp_proxy_config.local_tcp_port;
         let remote_cid = tcp_proxy_config.remote_cid;
         let remote_port = tcp_proxy_config.remote_port;
-        let num_workers = 1;
 
-        let mut tcp_proxy = proxy::tcp::TcpProxy::new(local_port, remote_cid, remote_port, num_workers).map_err(|e| SigServerError::TcpProxyError(e))?;
-        let listener = tcp_proxy.listen().map_err(|e| SigServerError::TcpProxyError(e))?;
+        let tcp_proxy = proxy::tcp::TcpProxy::new(local_port, remote_cid, remote_port).map_err(|e| SigServerError::TcpProxyError(e))?;
+        let tcp_proxy = std::sync::Arc::new(tcp_proxy);
+
+        let listener = tcp_proxy.listen().await.map_err(|e| SigServerError::TcpProxyError(e))?;
         tracing::info!("Starting tcp proxy with local_port: {}, remote cid: {}, remote_port: {}", local_port, remote_cid, remote_port);
 
         join_set.spawn(async move {
             loop {
-                match tcp_proxy.accept(&listener) {
-                    Ok(_) => {
-                        tracing::info!("Accepted tcp connection on proxy {:?}", tcp_proxy);
+                match tcp_proxy.clone().accept(&listener).await {
+                    Ok(_handler) => {
+                        tracing::info!("Accepted tcp connection on proxy {:?}", tcp_proxy.desc());
                     },
                     Err(e) => {
-                        tracing::error!("Error accepting tcp connection on proxy {:?}: {:?}", tcp_proxy, e);
+                        tracing::error!("Error accepting tcp connection on proxy {:?}: {:?}", tcp_proxy.desc(), e);
                     }
                 }
             }
@@ -51,22 +52,22 @@ pub async fn start(cfg : SigServerConfig) -> Result<(), SigServerError> {
     #[cfg(target_os = "linux")]
     {
         let vsock_port = cfg.enclave.grpc.vsock_port;
-        let num_workers = 1;
         let ip_addr_type = proxy::IpAddrType::IPAddrMixed;
         let localhost = "127.0.0.1".to_string();
         // forward traffic from vsock to grpc        
-        let mut vsock_proxy = proxy::vsock::VsockProxy::new(vsock_port, localhost.clone(), tcp_port, num_workers, ip_addr_type).map_err(|e| SigServerError::VSockProxyError(e))?;
-        let listener = vsock_proxy.listen().map_err(|e| SigServerError::VSockProxyError(e))?;
+        let vsock_proxy = proxy::vsock::VsockProxy::new(vsock_port, localhost.clone(), tcp_port, ip_addr_type).map_err(|e| SigServerError::VSockProxyError(e))?;
+        let vsock_proxy = std::sync::Arc::new(vsock_proxy);
+        let listener = vsock_proxy.listen().await.map_err(|e| SigServerError::VSockProxyError(e))?;
         tracing::info!("Starting vsock proxy for grpc with local_port: {}, remote_host: {}, remote_port: {}", vsock_port, localhost, tcp_port);
 
         join_set.spawn(async move {
             loop {
-                match vsock_proxy.accept(&listener) {
+                match vsock_proxy.clone().accept(&listener).await {
                     Ok(_) => {
-                        tracing::info!("Accepted vsock connection for grpc on proxy {:?}", vsock_proxy);
+                        tracing::info!("Accepted vsock connection for grpc on proxy {:?}", vsock_proxy.desc());
                     },
                     Err(e) => {
-                        tracing::error!("Error accepting vsock connection for grpc on proxy {:?}: {:?}", vsock_proxy, e);
+                        tracing::error!("Error accepting vsock connection for grpc on proxy {:?}: {:?}", vsock_proxy.desc(), e);
                     }
                 }
             }
