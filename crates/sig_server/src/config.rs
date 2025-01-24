@@ -32,7 +32,8 @@ pub struct VsockProxyConfig {
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct GrpcConfig {
-    pub port: u32,
+    pub vsock_port: u32,
+    pub tcp_port: u16,
 }
 
 #[derive(Debug, Clone, Deserialize)]

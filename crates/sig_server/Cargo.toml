@@ -23,6 +23,7 @@ ed25519-dalek = {workspace = true}
 rand = {workspace = true}
 rsa = {workspace = true}
 tokio-stream = {workspace = true}
+hex = {workspace = true}
 
 [build-dependencies]
 tonic-build = {workspace = true}
@@ -30,3 +31,4 @@ tonic-build = {workspace = true}
 [target.x86_64-unknown-linux-gnu.dependencies]
 proxy = { path = "../proxy" }
 tokio-vsock = "0.7.0"
+vsock = "0.3"

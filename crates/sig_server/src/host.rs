@@ -43,7 +43,7 @@ pub async fn start(cfg : SigServerConfig) -> Result<(), SigServerError> {
 
     let tcp_port = cfg.host.listen_port;
     let cid = cfg.enclave.cid;
-    let vsock_port = cfg.enclave.grpc.port;
+    let vsock_port = cfg.enclave.grpc.vsock_port;
 
     let mut tcp_proxy = proxy::tcp::TcpProxy::new(tcp_port, cid, vsock_port, num_workers).map_err(|e| SigServerError::TcpProxyError(e))?;
 
@@ -72,4 +72,39 @@ pub async fn start(cfg : SigServerConfig) -> Result<(), SigServerError> {
 #[cfg(not(target_os = "linux"))]
 pub async fn start(_cfg : SigServerConfig) -> Result<(), SigServerError> {
     panic!("Unsupported OS");
+}
+
+
+#[cfg(debug_assertions)] // for testing traffic between enclave and host
+pub async fn echo(cfg : SigServerConfig) -> Result<(), SigServerError> {
+    use tokio::io::AsyncReadExt;
+    use tokio::io::AsyncWriteExt;
+    
+    let tcp_port = cfg.host.listen_port;
+    let listener = tokio::net::TcpListener::bind(format!("127.0.0.1:{}", tcp_port)).await.map_err(|_| SigServerError::TcpProxyError(format!("fail to listen to tcp echo server on port {}", tcp_port)))?;
+    tracing::info!("Echo server listening on port {}", tcp_port);
+    loop {
+        let (mut socket, _) = listener.accept().await.map_err(|e| SigServerError::TcpProxyError(format!("fail to accept connection echo server on port {} for err {}", tcp_port, e)))?;
+        tokio::spawn(async move {
+            let (mut reader, mut writer) = socket.split();
+            let mut buffer = vec![0; 1024];
+
+            loop {
+                match reader.read(&mut buffer).await {
+                    Ok(0) => break, // Connection closed
+                    Ok(n) => {
+                        tracing::info!("Received and echo back data {} bytes from client: {:?}", n, &buffer[..n]);
+                        if let Err(e) = writer.write_all(&buffer[..n]).await {
+                            tracing::error!("Failed to send response: {:?}", e);
+                            break;
+                        }
+                    }
+                    Err(e) => {
+                        tracing::error!("Failed to read from socket: {:?}", e);
+                        break;
+                    }
+                }
+            }
+        });
+    }
 }

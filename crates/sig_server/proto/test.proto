@@ -1,0 +1,26 @@
+syntax = "proto3";
+package test;
+
+service Test {
+    rpc ConnectRemoteHost (ConnectRemoteHostReq) returns (ConnectRemoteHostResp);
+    rpc Decrypt (DecryptReq) returns (DecryptResp);
+}
+
+message ConnectRemoteHostReq {
+    string host = 1;
+    uint32 port = 2;
+    uint32 timeout_ms = 3;
+    string msg = 4;
+}
+
+message ConnectRemoteHostResp {
+    string msg = 1;
+}
+
+message DecryptReq {
+    bytes ciphertext = 1;
+}
+
+message DecryptResp {
+    bytes plaintext = 1;
+}

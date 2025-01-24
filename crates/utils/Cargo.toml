@@ -8,3 +8,5 @@ keywords.workspace = true
 [dependencies]
 rand = {workspace = true}
 rsa = {workspace = true}
+pkcs1 = {workspace = true}
+serde_bytes = { workspace = true }

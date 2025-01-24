@@ -2,7 +2,8 @@
 cid = 10
 
 [enclave.grpc]
-port = 50001
+vsock_port = 50001
+tcp_port = 7000
 
 [[enclave.tcp_proxies]]
 local_tcp_port = 7000

@@ -25,7 +25,10 @@ pub fn decrypt(private_key: &RsaPrivateKey, encrypted_data: &[u8]) -> Result<Vec
 #[cfg(test)]
 mod tests {
     use super::*;
-	use rsa::traits::PublicKeyParts;
+	use pkcs1::DecodeRsaPublicKey;
+    use rsa::traits::PublicKeyParts;
+    use rsa::pkcs1::EncodeRsaPublicKey;
+    use serde_bytes::ByteBuf;
 	use std::panic;
 
     #[test]
@@ -37,7 +40,10 @@ mod tests {
 
     #[test]
     fn test_rsa_encryption_decryption() {
-        let (private_key, public_key) = init_rsa_keypair();
+        let (private_key, pk) = init_rsa_keypair();
+        let bf = ByteBuf::from(pk.to_pkcs1_der().unwrap().as_bytes());
+        let public_key = RsaPublicKey::from_pkcs1_der(&bf).expect("fail for pkcs der");
+
         let data = b"hello world";
         let encrypted_data = encrypt(&public_key, data).unwrap();
         let decrypted_data = decrypt(&private_key, &encrypted_data).unwrap();
