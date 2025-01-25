@@ -1,27 +1,35 @@
 // // Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // // SPDX-License-Identifier: Apache-2.0
 
-// use std::io::{Read, Write};
-// use std::net::TcpListener;
-// use std::net::{IpAddr, Ipv4Addr};
-// use std::str;
+
+#[cfg(target_os = "linux")]
 use std::sync::mpsc;
-// use std::thread;
 
-use proxy::IpAddrType;
-use proxy::tcp::TcpProxy;
-use proxy::vsock::VsockProxy;
-use proxy::vsock::VSOCK_HOST_CID;
-use tokio_vsock::VsockStream;
-use tokio_vsock::VsockAddr;
-use tokio_vsock::VsockListener;
-use tokio::net::TcpListener;
-use tokio::net::TcpStream;
-use std::net::IpAddr;
-use std::net::Ipv4Addr;
-use tokio::io::AsyncWriteExt;
-use tokio::io::AsyncReadExt;
+#[cfg(target_os = "linux")]
+use proxy::{
+    IpAddrType,
+    vsock::VsockProxy,
+    vsock::VSOCK_HOST_CID,
+    tcp::TcpProxy,
+};
 
+#[cfg(target_os = "linux")]
+use tokio_vsock::{
+    VsockStream,
+    VsockAddr,
+    VsockListener,
+};
+
+#[cfg(target_os = "linux")]
+use tokio::{
+    net::{TcpListener, TcpStream},
+    io::{AsyncReadExt, AsyncWriteExt},
+};
+
+#[cfg(target_os = "linux")]
+use std::net::{IpAddr, Ipv4Addr};
+
+#[cfg(target_os = "linux")]
 async fn test_proxy_vsock_to_tcp_connection() {
     // Proxy will translate from port 8000 vsock to localhost port 9000 TCP
     let tcp_port = 9000;
@@ -90,7 +98,7 @@ async fn test_proxy_vsock_to_tcp_connection() {
     client_handle.await.expect("Client panicked");
 }
 
-
+#[cfg(target_os = "linux")]
 async fn test_proxy_tcp_to_vsock_connection() {
     // Proxy will translate from $TCP_PORT to remote CID 3 port 8000
     let tcp_port = 9000;
@@ -155,8 +163,7 @@ async fn test_proxy_tcp_to_vsock_connection() {
     client_handle.await.expect("Client panicked");
 }
 
-use std::env;
-
+#[cfg(target_os = "linux")]
 #[tokio::main]
 async fn main() {
     let trace_cfg = trace::TraceConfig { 
@@ -167,7 +174,7 @@ async fn main() {
 
     let _g = trace::init_tracing(trace_cfg);
 
-    let args: Vec<String> = env::args().collect();
+    let args: Vec<String> = std::env::args().collect();
     if args.len() > 1 && args[1] == "v2t" {
         test_proxy_vsock_to_tcp_connection().await;
     } else if args.len() > 1 && args[1] == "t2v" {
@@ -179,4 +186,10 @@ async fn main() {
     } else {
         panic!("Invalid arguments {:?}", args);
     }
+}
+
+#[cfg(not(target_os = "linux"))]
+#[tokio::main]
+async fn main() {
+    panic!("This test only runs on Linux");
 }

@@ -10,7 +10,7 @@ fi
 PROTO_DIR=./crates/sig_server/proto
 PROTO_FILE=attestation.proto
 REQ="{}"
-ADDR="[::1]:50051"
+ADDR="127.0.0.1:7000"
 
 PACK="attestation"
 SVC="Attestation"

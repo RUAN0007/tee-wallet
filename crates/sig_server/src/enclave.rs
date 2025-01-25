@@ -88,7 +88,8 @@ pub async fn start(cfg : SigServerConfig) -> Result<(), SigServerError> {
         let mut s = Server::builder()
             .add_service(AttestationServer::new(AttestationHandler::default()));
 
-        #[cfg(debug_assertions)]  {
+        #[cfg(debug_assertions)]  
+        {
             s = s.add_service(crate::service::test_svc::test_server::TestServer::new(crate::service::test_svc::TestHandler::default()));
         }
 

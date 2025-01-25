@@ -12,7 +12,6 @@ pub struct EnclaveConfig {
 #[derive(Debug, Clone, Deserialize)]
 pub struct HostConfig {
     pub vsock_proxies: Vec<VsockProxyConfig>,
-    pub grpc_proxy: TcpProxyConfig,
     pub listen_port : u16,
 }
 

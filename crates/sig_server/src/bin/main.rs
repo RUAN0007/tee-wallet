@@ -41,7 +41,7 @@ pub enum SigServerCommand {
 }
 
 // setup the tracing and load the config
-fn setup (cfg_path : &String) -> Result<(Vec<WorkerGuard>, SigServerConfig), SigServerError> {
+fn setup(cfg_path : &String) -> Result<(Vec<WorkerGuard>, SigServerConfig), SigServerError> {
     let cfg = SigServerConfig::load(&cfg_path)
         .map_err(|e| SigServerError::ConfigError(e))?;
     let cfg : SigServerConfig = cfg.try_deserialize().unwrap();

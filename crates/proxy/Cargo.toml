@@ -11,14 +11,9 @@ tokio = {workspace = true}
 tokio-stream = {workspace = true}
 rand = {workspace = true}
 tracing = { workspace = true } 
-tokio-vsock = {workspace = true}
-
-[target.x86_64-unknown-linux-gnu.dependencies]
 chrono = "0.4"
 hickory-resolver = "0.24"
 idna = "1.0.3"
-nix = "0.26"
 
-[target.x86_64-unknown-linux-gnu.dev-dependencies]
-ctor = "0.2.7"
-tempfile = "3.5.0"
+[target.x86_64-unknown-linux-gnu.dependencies]
+tokio-vsock = {workspace = true}

@@ -61,7 +61,6 @@ impl VsockProxy {
     /// different thread
     /// Returns the handle for the new thread or the appropriate error
     pub async fn accept(self: std::sync::Arc<Self>, listener: &VsockListener) -> ProxyResult<JoinHandle<()>>  {
-    // pub async fn accept(self: &mut Self, listener: &VsockListener) -> ProxyResult<JoinHandle<()>>  {
         let (vsock_stream, client_addr) = listener
             .accept()
             .await
@@ -113,58 +112,4 @@ impl VsockProxy {
         });
         Ok(h)
     }
-    
-
-    // pub async fn accept2(self : &mut Self, listener: &VsockListener) -> ProxyResult<()>  {
-    //     let (vsock_stream, client_addr) = listener
-    //         .accept()
-    //         .await
-    //         .map_err(|_| "Could not accept vsock connection")?;
-
-    //     tracing::debug!("Accepted vsock connection on {:?}", client_addr);
-    //     let dns_needs_resolution = self
-    //         .dns_resolution_info
-    //         .map_or(true, |info| info.is_expired());
-
-    //     let remote_addr = if dns_needs_resolution {
-    //         tracing::debug!("Resolving hostname: {}.", self.remote_host);
-
-    //         let dns_resolution = dns::resolve_single(&self.remote_host, self.ip_addr_type)?;
-
-    //         tracing::debug!(
-    //             "Using IP \"{:?}\" for the given server \"{}\". (TTL: {} secs)",
-    //             dns_resolution.ip_addr(),
-    //             self.remote_host,
-    //             dns_resolution.ttl().num_seconds()
-    //         );
-
-    //         self.getdns_resolution_info = Some(dns_resolution);
-    //         dns_resolution.ip_addr()
-    //     } else {
-    //         self.dns_resolution_info
-    //             .ok_or("DNS resolution failed!")?
-    //             .ip_addr()
-    //     };
-
-
-    //     let remote_addr = SocketAddr::new(remote_addr, self.remote_port);
-
-    //     Ok({
-    //         let server = TcpStream::connect(remote_addr)
-    //             .await
-    //             .expect("Could not create connection");
-    //         tracing::debug!(
-    //             "Connected client from {:?} to {:?}",
-    //             client_addr,
-    //             remote_addr
-    //         );
-
-    //         let (mut client_read,  mut client_write) = vsock_stream.into_split();
-    //         let (mut server_read, mut server_write) = server.into_split();
-
-    //         duplex_forward(&mut client_read, &mut client_write, &mut server_read, &mut server_write, self.desc()).await;
-    //         tracing::debug!("VSock Client on {:?} disconnected", client_addr);
-    //     })
-    // }
-    
 }
