@@ -13,7 +13,6 @@ use std::net::SocketAddr;
 use crate::{dns, IpAddrType, ProxyResult, traffic::duplex_forward};
 
 pub const VSOCK_HOST_CID: u32 = 3; // according to https://docs.aws.amazon.com/enclaves/latest/user/nitro-enclave-concepts.html
-pub const VSOCK_PROXY_PORT: u32 = 8000;
 
 /// Configuration parameters for port listening and remote destination
 #[derive(Clone, Debug)]
@@ -62,6 +61,7 @@ impl VsockProxy {
     /// different thread
     /// Returns the handle for the new thread or the appropriate error
     pub async fn accept(self: std::sync::Arc<Self>, listener: &VsockListener) -> ProxyResult<JoinHandle<()>>  {
+    // pub async fn accept(self: &mut Self, listener: &VsockListener) -> ProxyResult<JoinHandle<()>>  {
         let (vsock_stream, client_addr) = listener
             .accept()
             .await
