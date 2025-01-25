@@ -1,0 +1,21 @@
+# TODO: Change to alpine, after switching to musl from gnu. 
+FROM debian:latest
+
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+RUN mkdir -p /app/config
+
+# Copy the binary from the build stage
+COPY ../target/x86_64-unknown-linux-gnu/debug/sig_server ./sig_server
+COPY ../crates/sig_server/config/default.yaml ./local.yaml
+
+RUN chmod +x ./sig_server
+
+RUN echo "127.0.0.1  example.com" >> /etc/hosts
+RUN echo "127.0.0.1  another-example.com" >> /etc/hosts
+
+# Set the entrypoint
+ENTRYPOINT ["./sig_server", "enclave", "--config", "config"]

@@ -3,6 +3,10 @@ name = "sig_server"
 version = "0.1.0"
 edition = "2021"
 
+[[bin]]
+name = "sig_server"
+path = "src/bin/main.rs"
+
 [dependencies]
 trace={path="../trace"}
 utils={path="../utils"}
