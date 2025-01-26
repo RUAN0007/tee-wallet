@@ -181,7 +181,7 @@ async fn main() {
         test_proxy_tcp_to_vsock_connection().await;
     } else if args.len() > 2 && args[1] == "dns" {
         let host = &args[2];
-        let ip = proxy::dns::resolve_single(host, proxy::IpAddrType::IPAddrMixed).unwrap();
+        let ip = proxy::dns::resolve_single(host, proxy::IpAddrType::IPAddrMixed).await.unwrap();
         println!("Resolved host {} to ip {:?}", host, ip);
     } else {
         panic!("Invalid arguments {:?}", args);

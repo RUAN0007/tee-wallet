@@ -67,7 +67,7 @@ impl VsockProxy {
             .map_err(|_| "Could not accept vsock connection")?;
 
         tracing::debug!("Accepted vsock connection on {:?}", client_addr);
-        let dns_resolution = dns::resolve_single(&self.remote_host, self.ip_addr_type)?;
+        let dns_resolution = dns::resolve_single(&self.remote_host, self.ip_addr_type).await?;
 
         // let dns_needs_resolution = self
         //     .dns_resolution_info
