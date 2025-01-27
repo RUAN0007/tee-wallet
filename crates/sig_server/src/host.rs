@@ -78,12 +78,12 @@ pub async fn start(_cfg : SigServerConfig) -> Result<(), SigServerError> {
 
 
 #[cfg(debug_assertions)] // for testing traffic between enclave and host
-pub async fn echo(cfg : SigServerConfig) -> Result<(), SigServerError> {
+pub async fn echo(_cfg : SigServerConfig, port : &u16) -> Result<(), SigServerError> {
     use tokio::io::AsyncReadExt;
     use tokio::io::AsyncWriteExt;
     
-    let tcp_port = cfg.host.listen_port;
-    let listener = tokio::net::TcpListener::bind(format!("127.0.0.1:{}", tcp_port)).await.map_err(|_| SigServerError::TcpProxyError(format!("fail to listen to tcp echo server on port {}", tcp_port)))?;
+    let tcp_port = *port;
+    let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", tcp_port)).await.map_err(|_| SigServerError::TcpProxyError(format!("fail to listen to tcp echo server on port {}", tcp_port)))?;
     tracing::info!("Echo server listening on port {}", tcp_port);
     loop {
         let (mut socket, _) = listener.accept().await.map_err(|e| SigServerError::TcpProxyError(format!("fail to accept connection echo server on port {} for err {}", tcp_port, e)))?;

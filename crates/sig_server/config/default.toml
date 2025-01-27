@@ -25,7 +25,7 @@ remote_port = 8080
 
 [[host.vsock_proxies]]
 local_vsock_port = 9002
-remote_host = "another-example.com"
+remote_host = "localhost"
 remote_port = 8081
 
 [trace]

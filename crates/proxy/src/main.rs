@@ -183,6 +183,39 @@ async fn main() {
         let host = &args[2];
         let ip = proxy::dns::resolve_single(host, proxy::IpAddrType::IPAddrMixed).await.unwrap();
         println!("Resolved host {} to ip {:?}", host, ip);
+    } else if args.len() > 2 && args[1] == "conn" {
+        let host = &args[2];
+        let tcp_port = 9000;
+        let listener = tokio::net::TcpListener::bind(format!("127.0.0.1:{}", tcp_port)).await.expect("server fail to listen");
+        tracing::info!("Echo server listening on port {}", tcp_port);
+
+        let h = tokio::spawn(async move {
+            let (mut socket, _) = listener.accept().await.expect("server fail to listen");
+            let (mut reader, mut writer) = socket.split();
+            let mut buffer = vec![0; 1024];
+
+            match reader.read(&mut buffer).await {
+                Ok(0) => return,
+                Ok(n) => {
+                    tracing::info!("Received and echo back data {} bytes from client: {:?}", n, &buffer[..n]);
+                    if let Err(e) = writer.write_all(&buffer[..n]).await {
+                        tracing::error!("Failed to send response: {:?}", e);
+                        return;
+                    }
+                }
+                Err(e) => {
+                    tracing::error!("Failed to read from socket: {:?}", e);
+                    return;
+                }
+            }
+        });
+        let addr = format!("{}:{}", host, tcp_port);
+        tracing::info!("Connecting to {}", addr);
+        let mut stream = TcpStream::connect(addr).await.expect("Could not create connection");
+        // Write request
+        stream.write_all(b"client2server").await.expect("client write");
+
+        h.await.expect("Server panicked");
     } else {
         panic!("Invalid arguments {:?}", args);
     }

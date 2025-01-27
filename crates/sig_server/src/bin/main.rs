@@ -37,6 +37,8 @@ pub enum SigServerCommand {
     Echo { // To test the host can receive enclave traffic from the vsock
         #[arg(short, long)]
         cfg_path: String, // path to config file
+        #[arg(short, long)]
+        port: u16, // path to config file
     },
 }
 
@@ -71,9 +73,9 @@ impl Execute for SigServerCommand {
             }
 
             #[cfg(debug_assertions)]
-            SigServerCommand::Echo {cfg_path} => {
+            SigServerCommand::Echo {cfg_path, port} => {
                 let (_g, config) = setup(cfg_path)?;
-                host::echo(config).await?; 
+                host::echo(config, port).await?; 
                 return Ok(());
             }
         }

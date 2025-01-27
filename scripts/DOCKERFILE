@@ -20,20 +20,28 @@
 # # Set the entrypoint
 # ENTRYPOINT ["./sig_server", "enclave", "--config", "config"]
 
-FROM debian:latest
+FROM amazonlinux
 
-RUN apt-get update && apt-get install -y \
-    ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
+RUN yum install net-tools -y
+
+# RUN apt-get update && apt-get install -y \
+#     ca-certificates \
+#     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 RUN mkdir -p /app/config
 
 # Copy the binary from the build stage
 COPY ./proxy ./proxy
+COPY ./sig_server ./sig_server
 COPY ./run.sh ./run.sh
+COPY ./default.toml /app/config/default.toml
 
+RUN chmod +x ./sig_server
 RUN chmod +x ./proxy
 RUN chmod +x ./run.sh
 
-ENTRYPOINT ["/bin/sh"]
+# ENTRYPOINT ["/bin/sh"]
+# CMD ["/app/run.sh", "/app/sig_server", "enclave", "-c", "/app/config"]
+# CMD ["/app/run.sh", "/app/proxy", "dns", "www.example.com"]
+CMD ["/app/run.sh", "/app/proxy", "conn", "127.0.0.1"]

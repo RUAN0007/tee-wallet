@@ -51,8 +51,11 @@ pub async fn resolve(addr: &str, ip_addr_type: IpAddrType) -> ProxyResult<Vec<Dn
     let addr = domain_to_ascii(addr).map_err(|_| "Could not parse domain name")?;
 
     // Initialize a DNS resolver using the system's configured nameservers.
+    // let resolver = TokioAsyncResolver::tokio_from_system_conf()
+    //     .map_err(|e| format!("Error while initializing DNS resolver due to {:?}", e).to_string())?;
+    
     let resolver = TokioAsyncResolver::tokio_from_system_conf()
-        .map_err(|_| "Error while initializing DNS resolver!".to_string())?;
+        .map_err(|e| format!("Error while initializing DNS resolver due to {:?}", e).to_string())?;
 
     // DNS lookup
     // It results in a vector of IPs (V4 and V6)
