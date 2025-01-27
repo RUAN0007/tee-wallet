@@ -42,6 +42,6 @@ RUN chmod +x ./proxy
 RUN chmod +x ./run.sh
 
 # ENTRYPOINT ["/bin/sh"]
-# CMD ["/app/run.sh", "/app/sig_server", "enclave", "-c", "/app/config"]
+CMD ["/app/run.sh", "/app/sig_server", "enclave", "-c", "/app/config"]
 # CMD ["/app/run.sh", "/app/proxy", "dns", "www.example.com"]
-CMD ["/app/run.sh", "/app/proxy", "conn", "127.0.0.1"]
+# CMD ["/app/run.sh", "/app/proxy", "conn", "127.0.0.1"]

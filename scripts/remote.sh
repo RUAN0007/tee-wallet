@@ -1,6 +1,7 @@
-aws_host="ec2-user@ubuntu@ec2-52-62-132-168.ap-southeast-2.compute.amazonaws.com"
 
-aws_host="ec2-user@ec2-52-65-66-36.ap-southeast-2.compute.amazonaws.com"
+aws_domain="ec2-3-106-196-114.ap-southeast-2.compute.amazonaws.com"
+aws_host="ec2-user@${aws_domain}"
+
 
 pem="../tee_wallet_aws.pem"
 
@@ -13,6 +14,7 @@ scp -i ${pem} ./Dockerfile ${aws_host}:Dockerfile
 scp -i ${pem} ./run.sh ${aws_host}:run.sh
 
 echo "hi, world" | nc ${aws_host} 9000
+nc -z -v -w5 ${aws_domain} 9000 2>&1 
 
 
 # run in ec2

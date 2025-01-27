@@ -8,8 +8,8 @@ use std::sync::mpsc;
 #[cfg(target_os = "linux")]
 use proxy::{
     IpAddrType,
-    vsock::VsockProxy,
     vsock::VSOCK_HOST_CID,
+    vsock::VsockProxy,
     tcp::TcpProxy,
 };
 
@@ -36,6 +36,7 @@ async fn test_proxy_vsock_to_tcp_connection() {
     let vsock_proxy_port = 8000;
     let addr = IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)).to_string();
     let proxy = VsockProxy::new(
+        VSOCK_HOST_CID,
         vsock_proxy_port,
         addr,
         tcp_port,

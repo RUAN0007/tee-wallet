@@ -16,4 +16,11 @@ PACK="attestation"
 SVC="Attestation"
 METHOD="GetAttestationDoc"
 
-grpcurl -plaintext -import-path ${PROTO_DIR} -proto ${PROTO_FILE} -d ${REQ} ${ADDR} ${PACK}.${SVC}/${METHOD}
+grpcurl -plaintext -import-path ${PROTO_DIR} -proto ${PROTO_FILE}  -max-time 10 -d ${REQ} ${ADDR} ${PACK}.${SVC}/${METHOD}
+
+PROTO_FILE=test.proto
+REQ='{"host": "example.com", "port": 8080, "timeout_ms": 1000, "msg": "hi, enclave"}'
+ADDR="${aws_domain}:9000"
+PACK="test"
+SVC="Test"
+METHOD="ConnectRemoteHost"

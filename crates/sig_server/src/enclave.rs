@@ -1,4 +1,4 @@
-use std::{net::SocketAddr,result::Result};
+use std::result::Result;
 use rsa::pkcs1::EncodeRsaPublicKey;
 use tonic::transport::Server;
 use crate::{
@@ -18,10 +18,11 @@ pub static RSA_KEYPAIR: Lazy<(RsaPrivateKey, RsaPublicKey)> = Lazy::new(|| init_
 pub async fn start(cfg : SigServerConfig) -> Result<(), SigServerError> {
     let mut join_set = tokio::task::JoinSet::new();
     let tcp_port = cfg.enclave.grpc.tcp_port;
-    let socket_addr : SocketAddr = format!("127.0.0.1:{}", tcp_port).parse().unwrap();
+    let socket_addr = format!("127.0.0.1:{}", tcp_port);
+    println!("start to listen to grpc port: {:?}", socket_addr);
 
     // start the listener first, so that later proxy can connect. 
-    let listener = tokio::net::TcpListener::bind(socket_addr).await.unwrap();
+    let grpc_listener = tokio::net::TcpListener::bind(socket_addr).await.unwrap();
     
     #[cfg(target_os = "linux")]
     for tcp_proxy_config in cfg.enclave.tcp_proxies.iter() {
@@ -51,11 +52,12 @@ pub async fn start(cfg : SigServerConfig) -> Result<(), SigServerError> {
 
     #[cfg(target_os = "linux")]
     {
+        let tcp_port = cfg.enclave.grpc.tcp_port;
         let vsock_port = cfg.enclave.grpc.vsock_port;
         let ip_addr_type = proxy::IpAddrType::IPAddrMixed;
         let localhost = "127.0.0.1".to_string();
         // forward traffic from vsock to grpc        
-        let vsock_proxy = proxy::vsock::VsockProxy::new(vsock_port, localhost.clone(), tcp_port, ip_addr_type).map_err(|e| SigServerError::VSockProxyError(e))?;
+        let vsock_proxy = proxy::vsock::VsockProxy::new(cfg.enclave.cid, vsock_port, localhost.clone(), tcp_port, ip_addr_type).map_err(|e| SigServerError::VSockProxyError(e))?;
         let vsock_proxy = std::sync::Arc::new(vsock_proxy);
         let listener = vsock_proxy.listen().await.map_err(|e| SigServerError::VSockProxyError(e))?;
         tracing::info!("Starting vsock proxy for grpc with local_port: {}, remote_host: {}, remote_port: {}", vsock_port, localhost, tcp_port);
@@ -63,7 +65,7 @@ pub async fn start(cfg : SigServerConfig) -> Result<(), SigServerError> {
         join_set.spawn(async move {
             loop {
                 match vsock_proxy.clone().accept(&listener).await {
-                    Ok(_) => {
+                    Ok(handler) => {
                         tracing::info!("Accepted vsock connection for grpc on proxy {:?}", vsock_proxy.desc());
                     },
                     Err(e) => {
@@ -83,7 +85,7 @@ pub async fn start(cfg : SigServerConfig) -> Result<(), SigServerError> {
             pk_bytes,
             RSA_KEYPAIR.1.to_pkcs1_pem(rsa::pkcs1::LineEnding::LF),
         );
-        let incoming = tokio_stream::wrappers::TcpListenerStream::new(listener);
+        let incoming = tokio_stream::wrappers::TcpListenerStream::new(grpc_listener);
 
         let mut s = Server::builder()
             .add_service(AttestationServer::new(AttestationHandler::default()));
@@ -93,7 +95,7 @@ pub async fn start(cfg : SigServerConfig) -> Result<(), SigServerError> {
             s = s.add_service(crate::service::test_svc::test_server::TestServer::new(crate::service::test_svc::TestHandler::default()));
         }
 
-        _ = s.serve_with_incoming(incoming).await;
+        _ = s.serve_with_incoming(incoming).await.unwrap();
     });
 
 

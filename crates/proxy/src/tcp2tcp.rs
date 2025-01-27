@@ -1,28 +1,27 @@
 use tokio::net::TcpListener;
-use tokio_vsock::{VsockStream, VsockAddr};
 use tokio::task::JoinHandle;
-use std::sync::Arc;
 use tokio::net::TcpStream;
 
 use crate::{ProxyResult, traffic::duplex_forward};
 
 /// Configuration parameters for port listening and remote destination
 #[derive(Clone, Debug)]
-pub struct TcpProxy {
+pub struct Tcp2TcpProxy {
     local_port: u16,
-    remote_cid: u32,
-    remote_port: u32,
+    remote_host: String,
+    remote_port: u16,
 }
 
-impl TcpProxy {
+
+impl Tcp2TcpProxy {
     pub fn new(
         local_port: u16,
-        remote_cid: u32,
-        remote_port: u32,
+        remote_host: String,
+        remote_port: u16,
     ) -> ProxyResult<Self> {
-        Ok(TcpProxy {
+        Ok(Tcp2TcpProxy {
             local_port,
-            remote_cid,
+            remote_host,
             remote_port,
         })
     }
@@ -40,35 +39,38 @@ impl TcpProxy {
 
 	pub fn desc(&self) -> String {
 		format!(
-			"tcp proxy :{} -> {}:{}", self.local_port, self.remote_cid, self.remote_port
+			"tcp2tcp proxy :{} -> {}:{}", self.local_port, self.remote_host, self.remote_port
 		)
 	}
 
     /// Accepts an incoming connection coming on listener and handles it on a
     /// different thread
     /// Returns the handle for the new thread or the appropriate error
-    pub async fn accept(self : Arc<Self>, listener: &TcpListener) -> ProxyResult<JoinHandle<()>> {
+    pub async fn accept(self : std::sync::Arc<Self>, listener: &TcpListener) -> ProxyResult<JoinHandle<()>> {
         let (tcp_stream, client_addr) = listener
             .accept()
 			.await
             .map_err(|_| "Could not accept tcp connection")?;
 
         tracing::debug!("Accepted tcp connection on {:?}", client_addr);
-		let remote_cid = self.remote_cid;
-		let remote_port = self.remote_port;
 
-		let h = tokio::spawn(async move {
-			let vsock_addr = VsockAddr::new(remote_cid, remote_port);
-			let vsock_stream = VsockStream::connect(vsock_addr).await.expect("Could not connect");
+        let remote_addr = format!("{}:{}", self.remote_host, self.remote_port);
+        let h = tokio::spawn(async move {
+            let server = TcpStream::connect(remote_addr.clone())
+                .await
+                .expect("Could not create connection");
+            tracing::debug!(
+                "Connected client from {:?} to {:?}",
+                client_addr,
+                remote_addr
+            );
 
-			let (mut client_read,  mut client_write) = tcp_stream.into_split();
-            let (mut server_read, mut server_write) = vsock_stream.into_split();
+            let (mut client_read,  mut client_write) = tcp_stream.into_split();
+            let (mut server_read, mut server_write) = server.into_split();
 
             duplex_forward(&mut client_read, &mut client_write, &mut server_read, &mut server_write, self.desc()).await;
-            tracing::debug!("TCP Client on {:?} disconnected", client_addr);
-		});
-
+            tracing::debug!("VSock Client on {:?} disconnected", client_addr);
+        });
         Ok(h)
 	}
 }
-

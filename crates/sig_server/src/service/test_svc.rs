@@ -24,15 +24,20 @@ impl Test for TestHandler {
     ) -> Result<Response<ConnectRemoteHostResp>, Status> {
         let req = request.into_inner();
         let addr = format!("{}:{}", req.host, req.port);
-        let mut stream = TcpStream::connect(addr).await.map_err(|e| Status::internal(format!("Failed to connect: {:?}", e)))?;
+        tracing::debug!("Connecting to remote host at {}", addr);
+        let mut stream = TcpStream::connect(addr.clone()).await.map_err(|e| Status::internal(format!("Failed to connect: {:?}", e)))?;
+        tracing::debug!("remote host at {} connected", addr);
 		let msg = req.msg.as_bytes();
         stream.write_all(msg).await.map_err(|e| Status::internal(format!("Failed to send message {}: {:?}", req.msg, e)))?;
         
+        tracing::debug!("finish writing msg {}", req.msg);
         let duration = Duration::from_millis(req.timeout_ms as u64);
         let mut buffer = vec![0; 1024];
         
+        tracing::debug!("wait to read {}", req.msg);
         let n = timeout(duration, stream.read(&mut buffer)).await.map_err(|_| Status::internal("Timed out waiting for message"))??;
         let incoming_msg = String::from_utf8_lossy(&buffer[..n]).to_string();
+        tracing::debug!("read incoming msg {}", incoming_msg);
         
         let reply = ConnectRemoteHostResp { msg: incoming_msg };
         Ok(Response::new(reply))

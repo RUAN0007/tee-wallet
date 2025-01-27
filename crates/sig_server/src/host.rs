@@ -21,8 +21,8 @@ pub async fn start(cfg : SigServerConfig) -> Result<(), SigServerError> {
         let remote_port = vsock_proxy_config.remote_port;
 
         let ip_addr_type = proxy::IpAddrType::IPAddrMixed;
-
-        let vsock_proxy = proxy::vsock::VsockProxy::new(local_port, remote_host.clone(), remote_port, ip_addr_type).map_err(|e| SigServerError::VSockProxyError(e))?;
+        let host_cid = proxy::vsock::VSOCK_HOST_CID;
+        let vsock_proxy = proxy::vsock::VsockProxy::new(host_cid, local_port, remote_host.clone(), remote_port, ip_addr_type).map_err(|e| SigServerError::VSockProxyError(e))?;
         let vsock_proxy = std::sync::Arc::new(vsock_proxy);
 
         let listener = vsock_proxy.listen().await.map_err(|e| SigServerError::VSockProxyError(e))?;

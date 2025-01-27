@@ -4,6 +4,8 @@ pub mod vsock;
 #[cfg(target_os = "linux")]
 pub mod tcp;
 
+pub mod tcp2tcp;
+
 pub mod dns;
 
 mod traffic;

@@ -9,39 +9,41 @@ use tokio_vsock::VsockListener;
 
 use tokio::task::JoinHandle;
 use tokio::net::TcpStream;
-use std::net::SocketAddr;
-use crate::{dns, IpAddrType, ProxyResult, traffic::duplex_forward};
+use crate::{IpAddrType, ProxyResult, traffic::duplex_forward};
 
 pub const VSOCK_HOST_CID: u32 = 3; // according to https://docs.aws.amazon.com/enclaves/latest/user/nitro-enclave-concepts.html
 
 /// Configuration parameters for port listening and remote destination
 #[derive(Clone, Debug)]
 pub struct VsockProxy {
+    local_cid: u32,
     local_port: u32,
     remote_host: String,
     remote_port: u16,
-    ip_addr_type: IpAddrType,
+    _ip_addr_type: IpAddrType,
 }
 
 impl VsockProxy {
     pub fn new(
+        local_cid : u32,
         local_port: u32,
         remote_host: String,
         remote_port: u16,
         ip_addr_type: IpAddrType,
     ) -> ProxyResult<Self> {
         Ok(VsockProxy {
+            local_cid,
             local_port,
             remote_host,
             remote_port,
-            ip_addr_type,
+            _ip_addr_type : ip_addr_type,
         })
     }
 
     pub fn desc(&self) -> String {
         format!(
             "vsock proxy {}:{} -> {}:{}",
-            VSOCK_HOST_CID, self.local_port, self.remote_host, self.remote_port
+            self.local_cid, self.local_port, self.remote_host, self.remote_port
         )
     }
 
@@ -49,7 +51,7 @@ impl VsockProxy {
     /// Returns the file descriptor for it or the appropriate error
     pub async fn listen(&self) -> ProxyResult<VsockListener> {
 
-        let sockaddr = VsockAddr::new(VSOCK_HOST_CID, self.local_port);
+        let sockaddr = VsockAddr::new(self.local_cid, self.local_port);
         let listener = VsockListener::bind(sockaddr)
             .map_err(|_| format!("Could not bind to {:?}", sockaddr))?;
         tracing::info!("Bound to host sock {:?}", sockaddr);
@@ -67,7 +69,7 @@ impl VsockProxy {
             .map_err(|_| "Could not accept vsock connection")?;
 
         tracing::debug!("Accepted vsock connection on {:?}", client_addr);
-        let dns_resolution = dns::resolve_single(&self.remote_host, self.ip_addr_type).await?;
+        // let dns_resolution = dns::resolve_single(&self.remote_host, self.ip_addr_type).await?;
 
         // let dns_needs_resolution = self
         //     .dns_resolution_info
@@ -93,9 +95,10 @@ impl VsockProxy {
         //         .ip_addr()
         // };
 
-        let remote_addr = SocketAddr::new(dns_resolution.ip_addr(), self.remote_port);
+        // let remote_addr = SocketAddr::new(dns_resolution.ip_addr(), self.remote_port);
+        let remote_addr = format!("{}:{}", self.remote_host, self.remote_port);
         let h = tokio::spawn(async move {
-            let server = TcpStream::connect(remote_addr)
+            let server = TcpStream::connect(remote_addr.clone())
                 .await
                 .expect("Could not create connection");
             tracing::debug!(
