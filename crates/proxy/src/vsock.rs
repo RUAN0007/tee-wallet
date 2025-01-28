@@ -91,10 +91,10 @@ impl VsockProxy {
                 Err(e) => {
                     tracing::error!("Could not create connection to {:?}: {:?}", remote_addr, e);
 
-                    let response = b"Connection refused by server.\n";
-                    if let Err(e) = client_write.write_all(response).await {
-                        tracing::error!("Failed to send connection refused message: {:?}", e);
-                    }
+                    // let response = b"Connection refused by server.\n";
+                    // if let Err(e) = client_write.write_all(response).await {
+                    //     tracing::error!("Failed to send connection refused message: {:?}", e);
+                    // }
         
                     // Explicitly close the stream
                     if let Err(e) = client_write.shutdown().await {

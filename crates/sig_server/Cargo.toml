@@ -28,6 +28,7 @@ rand = {workspace = true}
 rsa = {workspace = true}
 tokio-stream = {workspace = true}
 hex = {workspace = true}
+attestation-doc-validation = {workspace = true}
 
 [build-dependencies]
 tonic-build = {workspace = true}

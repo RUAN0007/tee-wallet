@@ -9,4 +9,5 @@ keywords.workspace = true
 rand = {workspace = true}
 rsa = {workspace = true}
 pkcs1 = {workspace = true}
+hex = {workspace = true}
 serde_bytes = { workspace = true }

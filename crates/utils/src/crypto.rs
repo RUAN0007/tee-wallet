@@ -1,5 +1,14 @@
 use rsa::{RsaPrivateKey, RsaPublicKey, Pkcs1v15Encrypt};
 use rand::rngs::OsRng;
+use rand::{rngs::StdRng, SeedableRng};
+
+pub fn init_rsa_keypair_with_seed(seed: [u8; 32]) -> (RsaPrivateKey, RsaPublicKey) {
+    let mut rng = StdRng::from_seed(seed);
+    let bits = 2048;
+    let private_key = RsaPrivateKey::new(&mut rng, bits).expect("failed to generate a key");
+    let public_key = RsaPublicKey::from(&private_key);
+    (private_key, public_key)
+}
 
 pub fn init_rsa_keypair() -> (RsaPrivateKey, RsaPublicKey) {
     let mut rng = OsRng;
@@ -25,7 +34,7 @@ pub fn decrypt(private_key: &RsaPrivateKey, encrypted_data: &[u8]) -> Result<Vec
 #[cfg(test)]
 mod tests {
     use super::*;
-	use pkcs1::DecodeRsaPublicKey;
+	use pkcs1::{DecodeRsaPrivateKey, DecodeRsaPublicKey, EncodeRsaPrivateKey};
     use rsa::traits::PublicKeyParts;
     use rsa::pkcs1::EncodeRsaPublicKey;
     use serde_bytes::ByteBuf;
@@ -61,5 +70,21 @@ mod tests {
             assert_ne!(data.to_vec(), decrypted_data);
         });
 		assert!(result.is_err(), "Decryption panicked");
+    }
+
+
+    #[test]
+    fn test_rsa_sk() {
+        let (private_key, pk) = init_rsa_keypair();
+        let doc = private_key.to_pkcs1_der().unwrap();
+        let sk_bytes = doc.as_bytes();
+        println!("sk_bytes: {:?}", hex::encode(sk_bytes));
+
+        let sk = RsaPrivateKey::from_pkcs1_der(sk_bytes).unwrap();
+        let data = b"hello world";
+        let encrypted_data = encrypt(&pk, data).unwrap();
+        let decrypted_data = decrypt(&sk, &encrypted_data).unwrap();
+        assert_eq!(data.to_vec(), decrypted_data);
+
     }
 }

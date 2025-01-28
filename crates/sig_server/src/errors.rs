@@ -15,5 +15,4 @@ pub enum SigServerError {
     ListenerJoinError(#[from] tokio::task::JoinError),
 }
 
-pub const ERR_INVALID_NSM_RESP : &str = "invalid response from NSM";
 pub const ERR_EMPTY_ATTESTATION_DOC : &str = "empty attestation document";

@@ -58,7 +58,7 @@ impl Test for TestHandler {
 				return Ok(Response::new(reply));
 			},
 			Err(e) => {
-				return Err(Status::invalid_argument(format!("fail to decrypt for error {}", e)));
+				return Err(Status::invalid_argument(format!("fail to decrypt for error: {}", e)));
 			}
 		}
     }
