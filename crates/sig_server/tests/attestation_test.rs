@@ -32,7 +32,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_attestation_doc() {
         SERVER.get_or_init(start_server).await;
-        const URL : &str = "http://ec2-3-106-196-114.ap-southeast-2.compute.amazonaws.com:9000";
+        // const URL : &str = "http://ec2-3-106-196-114.ap-southeast-2.compute.amazonaws.com:9000";
         let mut client = AttestationClient::connect(URL).await.unwrap();
 
         let request = Request::new(AttestationReq {
@@ -81,11 +81,6 @@ mod tests {
             }
         });
 
-        // let _proxy_handler = tokio::spawn(async move {
-        //     let h = t2t_proxy.accept(&t2t_lister).await.unwrap(); 
-        //     h.await.unwrap();
-        // });
-
 	    const URL : &str = "http://127.0.0.1:40051";
         let mut client = AttestationClient::connect(URL).await.unwrap();
 
@@ -93,9 +88,6 @@ mod tests {
             nonce: vec![1, 2, 3],
         });
 		let response = client.get_attestation_doc(request).await;
-
-        // assert_eq!(response.code, 1);
-		// let response_inner = response.into_inner(); // Unwrap the response to get the inner message
 	
         match response {
             Err(e) => {
@@ -104,36 +96,8 @@ mod tests {
             },
             Ok(_) => panic!("Expected an error, but got a successful response"),
         }
-        // tokio::time::sleep(tokio::time::Duration::from_secs(1000)).await;
         while let Some(res) = handlers.join_next().await {
             tracing::info!("handler finished");
         }
-    }
-
-    #[tokio::test]
-    async fn test_task_lifetime() {
-        let trace_cfg = trace::TraceConfig { 
-            prefix: "proxy".to_owned(), 
-            dir: "log".to_owned(), 
-            level: tracing::Level::DEBUG, 
-            console: true, flame: false };
-    
-        let _g = trace::init_tracing(trace_cfg);
-
-        {
-            for c in 0..2 {
-
-                tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
-                let _h = tokio::spawn(async move {
-                    for i in 0..10 {
-                        tracing::debug!("{} count: {}", c, i);
-                        tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
-                    }
-                });
-            }
-            tokio::time::sleep(tokio::time::Duration::from_secs(5)).await;
-        }
-        tracing::debug!("proxy handler finished");
-        tokio::time::sleep(tokio::time::Duration::from_secs(20)).await;
     }
 }

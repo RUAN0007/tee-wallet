@@ -10,6 +10,7 @@ use tokio_vsock::VsockListener;
 use tokio::task::JoinHandle;
 use tokio::net::TcpStream;
 use crate::{IpAddrType, ProxyResult, traffic::duplex_forward};
+use tokio::io::AsyncWriteExt;
 
 pub const VSOCK_HOST_CID: u32 = 3; // according to https://docs.aws.amazon.com/enclaves/latest/user/nitro-enclave-concepts.html
 
@@ -69,49 +70,39 @@ impl VsockProxy {
             .map_err(|_| "Could not accept vsock connection")?;
 
         tracing::debug!("Accepted vsock connection on {:?}", client_addr);
-        // let dns_resolution = dns::resolve_single(&self.remote_host, self.ip_addr_type).await?;
 
-        // let dns_needs_resolution = self
-        //     .dns_resolution_info
-        //     .map_or(true, |info| info.is_expired());
-
-        // let remote_addr = if dns_needs_resolution {
-        //     tracing::debug!("Resolving hostname: {}.", self.remote_host);
-
-        //     let dns_resolution = dns::resolve_single(&self.remote_host, self.ip_addr_type)?;
-
-        //     tracing::debug!(
-        //         "Using IP \"{:?}\" for the given server \"{}\". (TTL: {} secs)",
-        //         dns_resolution.ip_addr(),
-        //         self.remote_host,
-        //         dns_resolution.ttl().num_seconds()
-        //     );
-
-        //     self.getdns_resolution_info = Some(dns_resolution);
-        //     dns_resolution.ip_addr()
-        // } else {
-        //     self.dns_resolution_info
-        //         .ok_or("DNS resolution failed!")?
-        //         .ip_addr()
-        // };
-
-        // let remote_addr = SocketAddr::new(dns_resolution.ip_addr(), self.remote_port);
         let remote_addr = format!("{}:{}", self.remote_host, self.remote_port);
         let h = tokio::spawn(async move {
-            let server = TcpStream::connect(remote_addr.clone())
-                .await
-                .expect("Could not create connection");
-            tracing::debug!(
-                "Connected client from {:?} to {:?}",
-                client_addr,
-                remote_addr
-            );
-
             let (mut client_read,  mut client_write) = vsock_stream.into_split();
-            let (mut server_read, mut server_write) = server.into_split();
 
-            duplex_forward(&mut client_read, &mut client_write, &mut server_read, &mut server_write, self.desc()).await;
-            tracing::debug!("VSock Client on {:?} disconnected", client_addr);
+            match TcpStream::connect(remote_addr.clone()).await {
+                Ok(server) => {
+                    tracing::debug!(
+                        "Connected client from {:?} to {:?}",
+                        client_addr,
+                        remote_addr
+                    );
+
+                    let (mut server_read, mut server_write) = server.into_split();
+
+                    duplex_forward(&mut client_read, &mut client_write, &mut server_read, &mut server_write, self.desc()).await;
+                    tracing::debug!("VSock Client on {:?} disconnected", client_addr);
+                }
+                Err(e) => {
+                    tracing::error!("Could not create connection to {:?}: {:?}", remote_addr, e);
+
+                    let response = b"Connection refused by server.\n";
+                    if let Err(e) = client_write.write_all(response).await {
+                        tracing::error!("Failed to send connection refused message: {:?}", e);
+                    }
+        
+                    // Explicitly close the stream
+                    if let Err(e) = client_write.shutdown().await {
+                        tracing::error!("Failed to shutdown TCP stream: {:?}", e);
+                    }                
+                    return;
+                }
+            }
         });
         Ok(h)
     }

@@ -65,7 +65,7 @@ pub async fn start(cfg : SigServerConfig) -> Result<(), SigServerError> {
         join_set.spawn(async move {
             loop {
                 match vsock_proxy.clone().accept(&listener).await {
-                    Ok(handler) => {
+                    Ok(_handler) => {
                         tracing::info!("Accepted vsock connection for grpc on proxy {:?}", vsock_proxy.desc());
                     },
                     Err(e) => {

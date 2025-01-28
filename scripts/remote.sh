@@ -1,5 +1,5 @@
 
-aws_domain="ec2-3-106-196-114.ap-southeast-2.compute.amazonaws.com"
+aws_domain="ec2-13-236-193-139.ap-southeast-2.compute.amazonaws.com"
 aws_host="ec2-user@${aws_domain}"
 
 

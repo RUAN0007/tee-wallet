@@ -54,7 +54,7 @@ pub async fn start(cfg : SigServerConfig) -> Result<(), SigServerError> {
         tracing::info!("Starting tcp proxy with local_port: {}, remote cid: {}, remote vsock port: {}", tcp_port, cid, vsock_port);
         loop {
             match tcp_proxy.clone().accept(&listener).await {
-                Ok(_) => {
+                Ok(_handler) => {
                     tracing::info!("Accepted tcp connection on proxy {:?}", tcp_proxy.desc());
                 },
                 Err(e) => {

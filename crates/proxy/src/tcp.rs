@@ -2,7 +2,6 @@ use tokio::net::TcpListener;
 use tokio_vsock::{VsockStream, VsockAddr};
 use tokio::task::JoinHandle;
 use std::sync::Arc;
-use tokio::net::TcpStream;
 
 use crate::{ProxyResult, traffic::duplex_forward};
 
