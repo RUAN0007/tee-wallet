@@ -29,6 +29,8 @@ rsa = {workspace = true}
 tokio-stream = {workspace = true}
 hex = {workspace = true}
 attestation-doc-validation = {workspace = true}
+prost-types = {workspace = true}
+
 
 [build-dependencies]
 tonic-build = {workspace = true}
@@ -40,4 +42,5 @@ proxy = { path = "../proxy" }
 proxy = { path = "../proxy" }
 tokio-vsock = "0.7.0"
 vsock = "0.3"
+
 

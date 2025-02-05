@@ -4836,6 +4836,7 @@ dependencies = [
  "hex",
  "once_cell",
  "prost",
+ "prost-types",
  "proxy",
  "rand 0.8.5",
  "rsa",
