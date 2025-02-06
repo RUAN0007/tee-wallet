@@ -7,6 +7,13 @@ pub struct EnclaveConfig {
     pub grpc: GrpcConfig,
     pub cid : u32,
     pub tcp_proxies: Vec<TcpProxyConfig>,
+    pub trusted_services: Vec<TrustedServiceIdentity>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct TrustedServiceIdentity {
+    pub svc_type : String,
+    pub pub_key : String, // base58 encoded ed25519 public key
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -49,6 +56,7 @@ impl SigServerConfig {
             // .add_source(File::with_name(&format!("{}/default", dir)))
             .add_source(File::with_name(&format!("{}/{}", dir, env)).required(false))
             .add_source(File::with_name(&format!("{}/local", dir)).required(false))
+            .add_source(File::with_name(&format!("{}/test", dir)).required(false))
             .add_source(config::Environment::with_prefix("SIG_SERVER"))
             .build()
     }

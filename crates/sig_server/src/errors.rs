@@ -13,6 +13,8 @@ pub enum SigServerError {
     TcpProxyError(String),
     #[error("listener loop joining error: {0}")]
     ListenerJoinError(#[from] tokio::task::JoinError),
+    #[error("invalid config parameter {0}, error: {1}")]
+    ConfigParameterError(String, String),
 }
 
 pub const ERR_EMPTY_ATTESTATION_DOC : &str = "empty attestation document";

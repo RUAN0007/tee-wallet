@@ -5,13 +5,13 @@ use std::collections::{HashMap, BTreeMap};
 use std::sync::RwLock;
 use once_cell::sync::Lazy;
 use crate::errors::SigServerError;
-use crate::service::authorization_svc::Principal;
+use crate::service::authorization_svc::ServiceType;
 use crate::service::authorization_svc::KeyType;
 
 #[derive(Hash, Clone, Debug, PartialEq)]
 pub struct AuthRecord {
 	pub addr: String,
-	pub principal: Principal,
+	pub svc_type: ServiceType,
 	pub start_at : SystemTime,	
 	pub end_at : SystemTime,
 	pub condition : String,
@@ -53,7 +53,7 @@ impl AuthRegistry {
 		Ok(id)
 	}
 
-	pub fn search(&self, addr : &str, principal : Principal, _condition : &str, _action : &str) -> Option<AuthRecord> {
+	pub fn search(&self, addr : &str, svc_type : ServiceType, _condition : &str, _action : &str) -> Option<AuthRecord> {
 		let now = SystemTime::now();
 		self.user_records_by_end_at.get(addr).and_then(|records| {
 			records.range(now..).next().and_then(|(_, id)| {
@@ -68,9 +68,9 @@ mod tests {
     use super::*;
     use std::time::{Duration, SystemTime};
 
-    fn create_test_record(addr: &str, principal: Principal, start_at: SystemTime, end_at: SystemTime) -> AuthRecord {
+    fn create_test_record(addr: &str, svc_type: ServiceType, start_at: SystemTime, end_at: SystemTime) -> AuthRecord {
         AuthRecord {
-            principal,
+            svc_type,
             start_at,
             end_at,
             condition: String::from("test_condition"),
@@ -91,10 +91,10 @@ mod tests {
     #[test]
     fn test_add() {
         let mut registry = AuthRegistry::new();
-        let principal = Principal::LimitOrder;
+        let svc_type = ServiceType::LimitOrder;
         let start_at = SystemTime::now();
         let end_at = start_at + Duration::from_secs(3600);
-        let record = create_test_record("test_addr", principal, start_at, end_at);
+        let record = create_test_record("test_addr", svc_type, start_at, end_at);
 
         let id = registry.add(record.clone()).unwrap();
         assert_eq!(registry.records.len(), 1);
@@ -105,13 +105,13 @@ mod tests {
     #[test]
     fn test_search() {
         let mut registry = AuthRegistry::new();
-        let principal = Principal::LimitOrder;
+        let svc_type = ServiceType::LimitOrder;
         let start_at = SystemTime::now();
         let end_at = start_at + Duration::from_secs(3600);
-        let record = create_test_record("test_addr", principal, start_at, end_at);
+        let record = create_test_record("test_addr", svc_type, start_at, end_at);
 
         registry.add(record.clone());
-        let result = registry.search("test_addr", principal, "test_condition", "test_action");
+        let result = registry.search("test_addr", svc_type, "test_condition", "test_action");
         assert!(result.is_some());
         assert_eq!(result.unwrap(), record);
     }
@@ -119,8 +119,8 @@ mod tests {
     #[test]
     fn test_search_no_result() {
         let registry = AuthRegistry::new();
-        let principal = Principal::LimitOrder;
-        let result = registry.search("non_existent_addr", principal, "test_condition", "test_action");
+        let svc_type = ServiceType::LimitOrder;
+        let result = registry.search("non_existent_addr", svc_type, "test_condition", "test_action");
         assert!(result.is_none());
     }
 }

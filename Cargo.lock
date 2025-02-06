@@ -4874,6 +4874,7 @@ version = "0.1.0"
 dependencies = [
  "attestation-doc-validation",
  "aws-nitro-enclaves-nsm-api",
+ "bincode",
  "bytes",
  "clap",
  "config",

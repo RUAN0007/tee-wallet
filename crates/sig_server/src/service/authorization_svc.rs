@@ -54,12 +54,12 @@ impl Authorization for AuthorizationHandler {
         let end_at = request.get_ref().end_at.ok_or(Status::invalid_argument("end_at is required"))?;
         let end_at : SystemTime = SystemTime::try_from(end_at).map_err(|e| Status::invalid_argument(format!("fail to parse start_at timestamp to SystemTime due to error {:?}", e)))?;
 
-        let principal = Principal::from_i32(request.get_ref().principal).ok_or(Status::invalid_argument("Invalid principal"))?;
+        let svc_type = ServiceType::from_i32(request.get_ref().svc_type).ok_or(Status::invalid_argument("Invalid service type"))?;
 
         let addr = ed25519_pk_to_addr(&user_pk);
         let auth_record = AuthRecord {
             addr: addr,
-            principal: principal, 
+            svc_type: svc_type, 
             start_at: start_at,
             end_at: end_at,
             condition: request.get_ref().condition.clone(),

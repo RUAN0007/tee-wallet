@@ -3,6 +3,7 @@ mod tests {
 	use rsa::RsaPublicKey;
     use sha2::digest::Key;
     use solana_sdk::signer::SeedDerivable;
+    use trace::init_tracing;
     use utils::crypto::{encrypt, init_rsa_keypair};
     use rsa::pkcs1::{DecodeRsaPublicKey, EncodeRsaPublicKey};
 	use tonic::transport::Server;
@@ -27,6 +28,7 @@ mod tests {
     use solana_sdk::transaction::VersionedTransaction;
     use solana_sdk::signature::Signer;
     use solana_sdk::signer::keypair::Keypair;
+    use sig_server::config::SigServerConfig;
     use std::path::Path;
     use std::env;
     use std::fs;
@@ -82,14 +84,12 @@ mod tests {
 
     #[tokio::test]
     async fn attest_auth_sign() {
+
+        let cfg = SigServerConfig::load("config/").unwrap();
+        let cfg : SigServerConfig = cfg.try_deserialize().unwrap();
+        let _ = init_tracing(cfg.trace.clone());
+
         SERVER.get_or_init(start_server).await;
-        let _g = trace::init_tracing(trace::TraceConfig{
-            prefix: "sig_server".to_owned(),
-            level: tracing::Level::DEBUG,
-            dir: "/tmp".to_owned(),
-            console: true,
-            flame: false,
-        });
 
         // 1. Parse attestation document to retrieve the TEE public key
         let url  = format!("http://{}:{}", HOST, PORT);
@@ -112,8 +112,10 @@ mod tests {
         // let key_pair = must_load_keypair();
 
         // a random private key only for testing. 
-        let random_sk = hex::decode("77162855b21a514f2cbabca428e647152f6129a2335557fbb1a921acc773f369").unwrap();
+        let random_sk = hex::decode(utils::TEST_ED25519_SK_HEX).unwrap();
+
         let key_pair = Keypair::from_seed(&random_sk).unwrap();
+        tracing::info!("bs58 encoded sk: {:?}", solana_sdk::bs58::encode(key_pair.pubkey()).into_string());
 
         let sk_bytes = key_pair.secret().to_bytes();
         let encrypted_sk = encrypt(&public_key, &sk_bytes).expect("fail to encrypt");
@@ -129,7 +131,7 @@ mod tests {
             nanos: 0,
         };
         let auth_req = AuthorizationReq {
-            principal: Principal::CopyTrading as i32, // 1
+            svc_type: ServiceType::CopyTrading as i32, // 1
             start_at : Some(start_at),
             end_at : Some(end_at),
             action: "".to_owned(),

@@ -3,7 +3,7 @@ package authorization;
 
 import "google/protobuf/timestamp.proto";
 
-enum Principal {
+enum ServiceType {
     LIMIT_ORDER = 0;
     COPY_TRADING = 1;
 }
@@ -18,7 +18,7 @@ service Authorization {
 }
 
 message AuthorizationReq {
-  Principal principal = 1;
+  ServiceType svc_type = 1;
   google.protobuf.Timestamp start_at = 2; 
   google.protobuf.Timestamp end_at = 3; 
   string condition = 4;

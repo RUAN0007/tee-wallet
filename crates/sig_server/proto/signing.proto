@@ -1,16 +1,16 @@
 syntax = "proto3";
-package sign;
+package signing;
 
 import "google/protobuf/timestamp.proto";
 
-service Sign {
+service Signing {
     rpc SolanaSign (SolanaSignReq) returns (SolanaSignResp);
 }
 
 message SolanaSignReq {
-  string from_service_id = 1;
+  bytes svc_pub_key = 1;
   bytes versioned_msg = 2;
-  bytes pub_key = 3;
+  string user_addr = 3;
 }
 
 message SolanaSignResp {

@@ -36,5 +36,5 @@ remote_port = 8081
 prefix = "sig_server"
 dir = "logs/"
 level = "info"
-console = true
+console = debug
 flame = false
