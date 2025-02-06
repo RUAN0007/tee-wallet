@@ -11,3 +11,8 @@ rsa = {workspace = true}
 pkcs1 = {workspace = true}
 hex = {workspace = true}
 serde_bytes = { workspace = true }
+ed25519-dalek = {workspace = true}
+prost-types = {workspace = true}
+bs58 = {workspace = true}
+secp256k1 = {workspace = true}
+sha3 = {workspace = true}

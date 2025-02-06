@@ -1,6 +1,8 @@
 use rsa::{RsaPrivateKey, RsaPublicKey, Pkcs1v15Encrypt};
 use rand::rngs::OsRng;
 use rand::{rngs::StdRng, SeedableRng};
+use std::error::Error;
+use sha3::{Digest, Keccak256};
 
 pub fn init_rsa_keypair_with_seed(seed: [u8; 32]) -> (RsaPrivateKey, RsaPublicKey) {
     let mut rng = StdRng::from_seed(seed);
@@ -18,8 +20,6 @@ pub fn init_rsa_keypair() -> (RsaPrivateKey, RsaPublicKey) {
     (private_key, public_key)
 }
 
-use std::error::Error;
-
 pub fn encrypt(public_key: &RsaPublicKey, data: &[u8]) -> Result<Vec<u8>, Box<dyn Error>> {
     let mut rng = OsRng;
     public_key.encrypt(&mut rng, Pkcs1v15Encrypt, data)
@@ -29,6 +29,18 @@ pub fn encrypt(public_key: &RsaPublicKey, data: &[u8]) -> Result<Vec<u8>, Box<dy
 pub fn decrypt(private_key: &RsaPrivateKey, encrypted_data: &[u8]) -> Result<Vec<u8>, Box<dyn Error>> {
     private_key.decrypt(Pkcs1v15Encrypt, encrypted_data)
         .map_err(|e| e.into())
+}
+
+pub fn ed25519_pk_to_addr(pk: &ed25519_dalek::VerifyingKey) -> String {
+    let addr = bs58::encode(pk.as_bytes()).into_string();
+    addr
+}
+
+pub fn secp256k1_pk_to_addr(pk: &secp256k1::PublicKey) -> String {
+    let serialized_pk = pk.serialize_uncompressed();
+    let hash = Keccak256::digest(&serialized_pk[1..]); // Skip the first byte (0x04)
+    let addr = &hash[12..]; // Take the last 20 bytes
+    format!("0x{}", hex::encode(addr))
 }
 
 #[cfg(test)]

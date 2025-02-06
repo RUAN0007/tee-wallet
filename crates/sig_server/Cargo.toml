@@ -30,6 +30,7 @@ tokio-stream = {workspace = true}
 hex = {workspace = true}
 attestation-doc-validation = {workspace = true}
 prost-types = {workspace = true}
+sha2 = {workspace = true}
 
 
 [build-dependencies]
