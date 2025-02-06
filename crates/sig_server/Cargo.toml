@@ -13,6 +13,7 @@ utils={path="../utils"}
 
 serde = { workspace = true }
 serde_bytes = { workspace = true }
+serde_json = { workspace = true }
 config = { workspace = true }
 clap = { workspace = true }
 thiserror = { workspace = true }
@@ -31,7 +32,7 @@ hex = {workspace = true}
 attestation-doc-validation = {workspace = true}
 prost-types = {workspace = true}
 sha2 = {workspace = true}
-
+solana-sdk = {workspace =true}
 
 [build-dependencies]
 tonic-build = {workspace = true}

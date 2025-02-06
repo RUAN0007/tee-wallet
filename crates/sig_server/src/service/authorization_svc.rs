@@ -15,6 +15,7 @@ use prost::Message;
 use utils::crypto::{decrypt, ed25519_pk_to_addr};
 use ed25519_dalek::SigningKey;
 use ed25519_dalek::Verifier;
+use crate::service::SIG_HEADER;
 
 tonic::include_proto!("authorization");
 
@@ -31,7 +32,7 @@ impl Authorization for AuthorizationHandler {
            return Err(Status::unimplemented("Secp256k1 not supported")); 
         }
 
-        let signature = request.metadata().get("X-Signature").ok_or(Status::unauthenticated("No signature"))?.to_str().map_err(|e| Status::unauthenticated(format!("Invalid signature due to error {:?}", e)))?;
+        let signature = request.metadata().get(SIG_HEADER).ok_or(Status::unauthenticated("No signature"))?.to_str().map_err(|e| Status::unauthenticated(format!("Invalid signature due to error {:?}", e)))?;
         let signature = hex::decode(signature).map_err(|e| Status::unauthenticated(format!("Fail to hex decode signature due to error {:?}", e)))?;
         let signature : [u8; 64] = signature.as_slice().try_into().map_err(|_| Status::unauthenticated("Invalid signature length"))?;
         let signature = ed25519_dalek::Signature::from_bytes(&signature);
@@ -73,7 +74,6 @@ impl Authorization for AuthorizationHandler {
         let reply = AuthorizationResp {
             id: auth_id,
         };
-
         Ok(Response::new(reply))
     }
 }
