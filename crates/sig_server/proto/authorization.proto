@@ -28,5 +28,5 @@ message AuthorizationReq {
 }
 
 message AuthorizationResp {
-  string id = 1; 
+  uint64 id = 1; 
 }

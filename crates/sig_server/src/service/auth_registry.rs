@@ -96,7 +96,7 @@ mod tests {
         let end_at = start_at + Duration::from_secs(3600);
         let record = create_test_record("test_addr", principal, start_at, end_at);
 
-        let id = registry.add(record.clone());
+        let id = registry.add(record.clone()).unwrap();
         assert_eq!(registry.records.len(), 1);
         assert_eq!(registry.user_records_by_end_at.len(), 1);
         assert_eq!(registry.records.get(&id).unwrap(), &record);

@@ -58,3 +58,18 @@ impl SigServerConfig {
         config.try_deserialize()
     }
 }
+
+use std::sync::RwLock;
+use trace::{init_tracing, WorkerGuard};
+
+#[cfg(test)]
+pub static _GUARDS : RwLock<Vec<WorkerGuard>> = RwLock::new(Vec::new()); // static lifetime to ensure the guards are not dropped
+
+#[cfg(test)]
+#[ctor::ctor]
+fn init() {
+    let cfg = SigServerConfig::load("config/").unwrap();
+    let cfg : SigServerConfig = cfg.try_deserialize().unwrap();
+
+    *_GUARDS.write().unwrap() = init_tracing(cfg.trace.clone());
+}

@@ -1,0 +1,135 @@
+2025-02-06T05:33:24.976440Z  INFO proxy::tcp2tcp: Bound to host tcp port "0.0.0.0:40051"
+2025-02-06T05:33:24.976787Z DEBUG hyper_util::client::legacy::connect::http: connecting to 127.0.0.1:40051
+2025-02-06T05:33:24.982554Z DEBUG hyper_util::client::legacy::connect::http: connected to 127.0.0.1:40051
+2025-02-06T05:33:24.982663Z DEBUG h2::client: binding client connection
+2025-02-06T05:33:24.982728Z DEBUG h2::client: client connection bound
+2025-02-06T05:33:24.982797Z DEBUG h2::codec::framed_write: send frame=Settings { flags: (0x0), enable_push: 0, initial_window_size: 2097152, max_frame_size: 16384, max_header_list_size: 16384 }
+2025-02-06T05:33:24.983305Z DEBUG Connection{peer=Client}: h2::codec::framed_write: send frame=WindowUpdate { stream_id: StreamId(0), size_increment: 5177345 }
+2025-02-06T05:33:24.983389Z DEBUG tower::buffer::worker: service.ready=true processing request
+2025-02-06T05:33:24.983531Z DEBUG Connection{peer=Client}: h2::codec::framed_write: send frame=Headers { stream_id: StreamId(1), flags: (0x4: END_HEADERS) }
+2025-02-06T05:33:24.983587Z DEBUG Connection{peer=Client}: h2::codec::framed_write: send frame=Data { stream_id: StreamId(1) }
+2025-02-06T05:33:24.983613Z DEBUG Connection{peer=Client}: h2::codec::framed_write: send frame=Data { stream_id: StreamId(1), flags: (0x1: END_STREAM) }
+2025-02-06T05:33:24.983709Z DEBUG proxy::tcp2tcp: Accepted tcp connection on 127.0.0.1:60551
+2025-02-06T05:33:24.983742Z  INFO sig_server::service::attestation_svc::tests: Accepted vsock connection on proxy "tcp2tcp proxy :40051 -> 127.0.0.1:50051"
+2025-02-06T05:33:24.984189Z DEBUG Connection{peer=Client}: h2::proto::connection: Connection::poll; IO error error=ConnectionReset
+2025-02-06T05:33:24.984283Z DEBUG tonic::transport::channel::service::connection: connection task error: hyper::Error(Io, Kind(ConnectionReset))
+2025-02-06T05:35:16.548234Z  INFO proxy::tcp2tcp: Bound to host tcp port "0.0.0.0:40051"
+2025-02-06T05:35:16.551140Z DEBUG hyper_util::client::legacy::connect::http: connecting to 127.0.0.1:50051
+2025-02-06T05:36:54.005097Z  INFO proxy::tcp2tcp: Bound to host tcp port "0.0.0.0:40051"
+2025-02-06T05:36:54.005934Z DEBUG hyper_util::client::legacy::connect::http: connecting to 127.0.0.1:50051
+2025-02-06T05:37:22.654757Z  INFO proxy::tcp2tcp: Bound to host tcp port "0.0.0.0:40051"
+2025-02-06T05:37:22.655644Z DEBUG hyper_util::client::legacy::connect::http: connecting to 127.0.0.1:50051
+2025-02-06T05:39:35.791909Z  INFO proxy::tcp2tcp: Bound to host tcp port "0.0.0.0:40051"
+2025-02-06T05:39:35.792233Z DEBUG hyper_util::client::legacy::connect::http: connecting to 127.0.0.1:50051
+2025-02-06T05:40:04.237171Z  INFO proxy::tcp2tcp: Bound to host tcp port "0.0.0.0:40051"
+2025-02-06T05:40:04.237694Z DEBUG hyper_util::client::legacy::connect::http: connecting to 127.0.0.1:50051
+2025-02-06T05:40:53.601985Z  INFO proxy::tcp2tcp: Bound to host tcp port "0.0.0.0:40051"
+2025-02-06T05:40:53.602753Z DEBUG hyper_util::client::legacy::connect::http: connecting to 127.0.0.1:50051
+2025-02-06T06:11:05.628680Z  INFO proxy::tcp2tcp: Bound to host tcp port "0.0.0.0:40051"
+2025-02-06T06:11:05.629382Z DEBUG hyper_util::client::legacy::connect::http: connecting to 127.0.0.1:40051
+2025-02-06T06:11:05.634351Z DEBUG hyper_util::client::legacy::connect::http: connected to 127.0.0.1:40051
+2025-02-06T06:11:05.634513Z DEBUG h2::client: binding client connection
+2025-02-06T06:11:05.634708Z DEBUG h2::client: client connection bound
+2025-02-06T06:11:05.634788Z DEBUG h2::codec::framed_write: send frame=Settings { flags: (0x0), enable_push: 0, initial_window_size: 2097152, max_frame_size: 16384, max_header_list_size: 16384 }
+2025-02-06T06:11:05.635463Z DEBUG Connection{peer=Client}: h2::codec::framed_write: send frame=WindowUpdate { stream_id: StreamId(0), size_increment: 5177345 }
+2025-02-06T06:11:05.635638Z DEBUG tower::buffer::worker: service.ready=true processing request
+2025-02-06T06:11:05.635891Z DEBUG Connection{peer=Client}: h2::codec::framed_write: send frame=Headers { stream_id: StreamId(1), flags: (0x4: END_HEADERS) }
+2025-02-06T06:11:05.635967Z DEBUG Connection{peer=Client}: h2::codec::framed_write: send frame=Data { stream_id: StreamId(1) }
+2025-02-06T06:11:05.636000Z DEBUG Connection{peer=Client}: h2::codec::framed_write: send frame=Data { stream_id: StreamId(1), flags: (0x1: END_STREAM) }
+2025-02-06T06:11:05.636094Z DEBUG proxy::tcp2tcp: Accepted tcp connection on 127.0.0.1:50487
+2025-02-06T06:11:05.636117Z  INFO attestation_test::tests: Accepted vsock connection on proxy "tcp2tcp proxy :40051 -> 127.0.0.1:50051"
+2025-02-06T06:11:05.641663Z DEBUG proxy::tcp2tcp: Connected client from 127.0.0.1:50487 to "127.0.0.1:50051"
+2025-02-06T06:11:05.641839Z DEBUG h2::codec::framed_write: send frame=Settings { flags: (0x0), initial_window_size: 1048576, max_frame_size: 16384, max_header_list_size: 16384 }
+2025-02-06T06:11:05.641974Z DEBUG Connection{peer=Server}: h2::codec::framed_read: received frame=Settings { flags: (0x0), enable_push: 0, initial_window_size: 2097152, max_frame_size: 16384, max_header_list_size: 16384 }
+2025-02-06T06:11:05.642021Z DEBUG Connection{peer=Server}: h2::codec::framed_write: send frame=Settings { flags: (0x1: ACK) }
+2025-02-06T06:11:05.642054Z DEBUG Connection{peer=Server}: h2::codec::framed_read: received frame=WindowUpdate { stream_id: StreamId(0), size_increment: 5177345 }
+2025-02-06T06:11:05.642281Z DEBUG Connection{peer=Server}: h2::codec::framed_read: received frame=Headers { stream_id: StreamId(1), flags: (0x4: END_HEADERS) }
+2025-02-06T06:11:05.642334Z DEBUG Connection{peer=Server}: h2::codec::framed_read: received frame=Data { stream_id: StreamId(1) }
+2025-02-06T06:11:05.642368Z DEBUG Connection{peer=Server}: h2::codec::framed_read: received frame=Data { stream_id: StreamId(1), flags: (0x1: END_STREAM) }
+2025-02-06T06:11:05.642399Z DEBUG Connection{peer=Server}: h2::codec::framed_write: send frame=WindowUpdate { stream_id: StreamId(0), size_increment: 983041 }
+2025-02-06T06:11:05.642618Z ERROR aws_nitro_enclaves_nsm_api::driver: Device file '/dev/nsm' failed to open: No such file or directory (os error 2)    
+2025-02-06T06:11:05.643546Z ERROR aws_nitro_enclaves_nsm_api::driver: File of descriptor -1 failed to close: EBADF: Bad file number    
+2025-02-06T06:11:05.643564Z  WARN sig_server::service::attestation_svc: NSM is not available (Error(InternalError)), using fake attestation document for local debugging
+2025-02-06T06:11:05.644203Z DEBUG Connection{peer=Server}: h2::codec::framed_write: send frame=Headers { stream_id: StreamId(1), flags: (0x4: END_HEADERS) }
+2025-02-06T06:11:05.644257Z DEBUG Connection{peer=Server}: h2::codec::framed_write: send frame=Data { stream_id: StreamId(1) }
+2025-02-06T06:11:05.644309Z DEBUG Connection{peer=Server}: h2::codec::framed_write: send frame=Headers { stream_id: StreamId(1), flags: (0x5: END_HEADERS | END_STREAM) }
+2025-02-06T06:11:05.644470Z DEBUG Connection{peer=Client}: h2::codec::framed_read: received frame=Settings { flags: (0x0), initial_window_size: 1048576, max_frame_size: 16384, max_header_list_size: 16384 }
+2025-02-06T06:11:05.644501Z DEBUG Connection{peer=Client}: h2::codec::framed_write: send frame=Settings { flags: (0x1: ACK) }
+2025-02-06T06:11:05.644531Z DEBUG Connection{peer=Client}: h2::codec::framed_read: received frame=Settings { flags: (0x1: ACK) }
+2025-02-06T06:11:05.644554Z DEBUG Connection{peer=Client}: h2::proto::settings: received settings ACK; applying Settings { flags: (0x0), enable_push: 0, initial_window_size: 2097152, max_frame_size: 16384, max_header_list_size: 16384 }
+2025-02-06T06:11:05.644584Z DEBUG Connection{peer=Client}: h2::codec::framed_read: received frame=WindowUpdate { stream_id: StreamId(0), size_increment: 983041 }
+2025-02-06T06:11:05.644699Z DEBUG Connection{peer=Client}: h2::codec::framed_read: received frame=Headers { stream_id: StreamId(1), flags: (0x4: END_HEADERS) }
+2025-02-06T06:11:05.644733Z DEBUG Connection{peer=Client}: h2::codec::framed_read: received frame=Data { stream_id: StreamId(1) }
+2025-02-06T06:11:05.644777Z DEBUG Connection{peer=Client}: h2::codec::framed_read: received frame=Headers { stream_id: StreamId(1), flags: (0x5: END_HEADERS | END_STREAM) }
+2025-02-06T06:11:06.338202Z  INFO proxy::tcp2tcp: Bound to host tcp port "0.0.0.0:40051"
+2025-02-06T06:11:06.338352Z DEBUG hyper_util::client::legacy::connect::http: connecting to 127.0.0.1:40051
+2025-02-06T06:11:06.342790Z DEBUG hyper_util::client::legacy::connect::http: connected to 127.0.0.1:40051
+2025-02-06T06:11:06.342836Z DEBUG h2::client: binding client connection
+2025-02-06T06:11:06.342868Z DEBUG h2::client: client connection bound
+2025-02-06T06:11:06.342890Z DEBUG h2::codec::framed_write: send frame=Settings { flags: (0x0), enable_push: 0, initial_window_size: 2097152, max_frame_size: 16384, max_header_list_size: 16384 }
+2025-02-06T06:11:06.343098Z DEBUG Connection{peer=Client}: h2::codec::framed_write: send frame=WindowUpdate { stream_id: StreamId(0), size_increment: 5177345 }
+2025-02-06T06:11:06.343164Z DEBUG tower::buffer::worker: service.ready=true processing request
+2025-02-06T06:11:06.343264Z DEBUG Connection{peer=Client}: h2::codec::framed_write: send frame=Headers { stream_id: StreamId(1), flags: (0x4: END_HEADERS) }
+2025-02-06T06:11:06.343318Z DEBUG Connection{peer=Client}: h2::codec::framed_write: send frame=Data { stream_id: StreamId(1) }
+2025-02-06T06:11:06.343343Z DEBUG Connection{peer=Client}: h2::codec::framed_write: send frame=Data { stream_id: StreamId(1), flags: (0x1: END_STREAM) }
+2025-02-06T06:11:06.343405Z DEBUG proxy::tcp2tcp: Accepted tcp connection on 127.0.0.1:50489
+2025-02-06T06:11:06.343422Z  INFO attestation_test::tests: Accepted vsock connection on proxy "tcp2tcp proxy :40051 -> 127.0.0.1:50051"
+2025-02-06T06:11:06.347168Z DEBUG proxy::tcp2tcp: Connected client from 127.0.0.1:50489 to "127.0.0.1:50051"
+2025-02-06T06:11:06.347245Z DEBUG h2::codec::framed_write: send frame=Settings { flags: (0x0), initial_window_size: 1048576, max_frame_size: 16384, max_header_list_size: 16384 }
+2025-02-06T06:11:06.347328Z DEBUG Connection{peer=Server}: h2::codec::framed_read: received frame=Settings { flags: (0x0), enable_push: 0, initial_window_size: 2097152, max_frame_size: 16384, max_header_list_size: 16384 }
+2025-02-06T06:11:06.347356Z DEBUG Connection{peer=Server}: h2::codec::framed_write: send frame=Settings { flags: (0x1: ACK) }
+2025-02-06T06:11:06.347383Z DEBUG Connection{peer=Server}: h2::codec::framed_read: received frame=WindowUpdate { stream_id: StreamId(0), size_increment: 5177345 }
+2025-02-06T06:11:06.347569Z DEBUG Connection{peer=Server}: h2::codec::framed_read: received frame=Headers { stream_id: StreamId(1), flags: (0x4: END_HEADERS) }
+2025-02-06T06:11:06.347612Z DEBUG Connection{peer=Server}: h2::codec::framed_read: received frame=Data { stream_id: StreamId(1) }
+2025-02-06T06:11:06.347638Z DEBUG Connection{peer=Server}: h2::codec::framed_read: received frame=Data { stream_id: StreamId(1), flags: (0x1: END_STREAM) }
+2025-02-06T06:11:06.347664Z DEBUG Connection{peer=Server}: h2::codec::framed_write: send frame=WindowUpdate { stream_id: StreamId(0), size_increment: 983041 }
+2025-02-06T06:11:06.347791Z ERROR aws_nitro_enclaves_nsm_api::driver: Device file '/dev/nsm' failed to open: No such file or directory (os error 2)    
+2025-02-06T06:11:06.348500Z ERROR aws_nitro_enclaves_nsm_api::driver: File of descriptor -1 failed to close: EBADF: Bad file number    
+2025-02-06T06:11:06.348515Z  WARN sig_server::service::attestation_svc: NSM is not available (Error(InternalError)), using fake attestation document for local debugging
+2025-02-06T06:11:06.349081Z DEBUG Connection{peer=Server}: h2::codec::framed_write: send frame=Headers { stream_id: StreamId(1), flags: (0x4: END_HEADERS) }
+2025-02-06T06:11:06.349120Z DEBUG Connection{peer=Server}: h2::codec::framed_write: send frame=Data { stream_id: StreamId(1) }
+2025-02-06T06:11:06.349157Z DEBUG Connection{peer=Server}: h2::codec::framed_write: send frame=Headers { stream_id: StreamId(1), flags: (0x5: END_HEADERS | END_STREAM) }
+2025-02-06T06:11:06.349256Z DEBUG Connection{peer=Client}: h2::codec::framed_read: received frame=Settings { flags: (0x0), initial_window_size: 1048576, max_frame_size: 16384, max_header_list_size: 16384 }
+2025-02-06T06:11:06.349312Z DEBUG Connection{peer=Client}: h2::codec::framed_write: send frame=Settings { flags: (0x1: ACK) }
+2025-02-06T06:11:06.349343Z DEBUG Connection{peer=Client}: h2::codec::framed_read: received frame=Settings { flags: (0x1: ACK) }
+2025-02-06T06:11:06.349368Z DEBUG Connection{peer=Client}: h2::proto::settings: received settings ACK; applying Settings { flags: (0x0), enable_push: 0, initial_window_size: 2097152, max_frame_size: 16384, max_header_list_size: 16384 }
+2025-02-06T06:11:06.349396Z DEBUG Connection{peer=Client}: h2::codec::framed_read: received frame=WindowUpdate { stream_id: StreamId(0), size_increment: 983041 }
+2025-02-06T06:11:06.349504Z DEBUG Connection{peer=Client}: h2::codec::framed_read: received frame=Headers { stream_id: StreamId(1), flags: (0x4: END_HEADERS) }
+2025-02-06T06:11:06.349537Z DEBUG Connection{peer=Client}: h2::codec::framed_read: received frame=Data { stream_id: StreamId(1) }
+2025-02-06T06:11:06.349582Z DEBUG Connection{peer=Client}: h2::codec::framed_read: received frame=Headers { stream_id: StreamId(1), flags: (0x5: END_HEADERS | END_STREAM) }
+2025-02-06T06:13:36.692588Z  INFO proxy::tcp2tcp: Bound to host tcp port "0.0.0.0:40051"
+2025-02-06T06:13:36.693385Z DEBUG hyper_util::client::legacy::connect::http: connecting to 127.0.0.1:40051
+2025-02-06T06:13:36.697953Z DEBUG hyper_util::client::legacy::connect::http: connected to 127.0.0.1:40051
+2025-02-06T06:13:36.698033Z DEBUG h2::client: binding client connection
+2025-02-06T06:13:36.698080Z DEBUG h2::client: client connection bound
+2025-02-06T06:13:36.698146Z DEBUG h2::codec::framed_write: send frame=Settings { flags: (0x0), enable_push: 0, initial_window_size: 2097152, max_frame_size: 16384, max_header_list_size: 16384 }
+2025-02-06T06:13:36.698644Z DEBUG Connection{peer=Client}: h2::codec::framed_write: send frame=WindowUpdate { stream_id: StreamId(0), size_increment: 5177345 }
+2025-02-06T06:13:36.698728Z DEBUG tower::buffer::worker: service.ready=true processing request
+2025-02-06T06:13:36.698874Z DEBUG Connection{peer=Client}: h2::codec::framed_write: send frame=Headers { stream_id: StreamId(1), flags: (0x4: END_HEADERS) }
+2025-02-06T06:13:36.698943Z DEBUG Connection{peer=Client}: h2::codec::framed_write: send frame=Data { stream_id: StreamId(1) }
+2025-02-06T06:13:36.698969Z DEBUG Connection{peer=Client}: h2::codec::framed_write: send frame=Data { stream_id: StreamId(1), flags: (0x1: END_STREAM) }
+2025-02-06T06:13:36.699032Z DEBUG proxy::tcp2tcp: Accepted tcp connection on 127.0.0.1:50927
+2025-02-06T06:13:36.699049Z  INFO sig_server::service::attestation_svc::tests: Accepted vsock connection on proxy "tcp2tcp proxy :40051 -> 127.0.0.1:50051"
+2025-02-06T06:13:36.703710Z DEBUG proxy::tcp2tcp: Connected client from 127.0.0.1:50927 to "127.0.0.1:50051"
+2025-02-06T06:13:36.703842Z DEBUG h2::codec::framed_write: send frame=Settings { flags: (0x0), initial_window_size: 1048576, max_frame_size: 16384, max_header_list_size: 16384 }
+2025-02-06T06:13:36.703962Z DEBUG Connection{peer=Server}: h2::codec::framed_read: received frame=Settings { flags: (0x0), enable_push: 0, initial_window_size: 2097152, max_frame_size: 16384, max_header_list_size: 16384 }
+2025-02-06T06:13:36.703994Z DEBUG Connection{peer=Server}: h2::codec::framed_write: send frame=Settings { flags: (0x1: ACK) }
+2025-02-06T06:13:36.704027Z DEBUG Connection{peer=Server}: h2::codec::framed_read: received frame=WindowUpdate { stream_id: StreamId(0), size_increment: 5177345 }
+2025-02-06T06:13:36.704256Z DEBUG Connection{peer=Server}: h2::codec::framed_read: received frame=Headers { stream_id: StreamId(1), flags: (0x4: END_HEADERS) }
+2025-02-06T06:13:36.704300Z DEBUG Connection{peer=Server}: h2::codec::framed_read: received frame=Data { stream_id: StreamId(1) }
+2025-02-06T06:13:36.704330Z DEBUG Connection{peer=Server}: h2::codec::framed_read: received frame=Data { stream_id: StreamId(1), flags: (0x1: END_STREAM) }
+2025-02-06T06:13:36.704361Z DEBUG Connection{peer=Server}: h2::codec::framed_write: send frame=WindowUpdate { stream_id: StreamId(0), size_increment: 983041 }
+2025-02-06T06:13:36.704541Z ERROR aws_nitro_enclaves_nsm_api::driver: Device file '/dev/nsm' failed to open: No such file or directory (os error 2)    
+2025-02-06T06:13:36.705423Z ERROR aws_nitro_enclaves_nsm_api::driver: File of descriptor -1 failed to close: EBADF: Bad file number    
+2025-02-06T06:13:36.705442Z  WARN sig_server::service::attestation_svc: NSM is not available (Error(InternalError)), using fake attestation document for local debugging
+2025-02-06T06:13:36.706054Z DEBUG Connection{peer=Server}: h2::codec::framed_write: send frame=Headers { stream_id: StreamId(1), flags: (0x4: END_HEADERS) }
+2025-02-06T06:13:36.706097Z DEBUG Connection{peer=Server}: h2::codec::framed_write: send frame=Data { stream_id: StreamId(1) }
+2025-02-06T06:13:36.706139Z DEBUG Connection{peer=Server}: h2::codec::framed_write: send frame=Headers { stream_id: StreamId(1), flags: (0x5: END_HEADERS | END_STREAM) }
+2025-02-06T06:13:36.706238Z DEBUG Connection{peer=Client}: h2::codec::framed_read: received frame=Settings { flags: (0x0), initial_window_size: 1048576, max_frame_size: 16384, max_header_list_size: 16384 }
+2025-02-06T06:13:36.706264Z DEBUG Connection{peer=Client}: h2::codec::framed_write: send frame=Settings { flags: (0x1: ACK) }
+2025-02-06T06:13:36.706290Z DEBUG Connection{peer=Client}: h2::codec::framed_read: received frame=Settings { flags: (0x1: ACK) }
+2025-02-06T06:13:36.706314Z DEBUG Connection{peer=Client}: h2::proto::settings: received settings ACK; applying Settings { flags: (0x0), enable_push: 0, initial_window_size: 2097152, max_frame_size: 16384, max_header_list_size: 16384 }
+2025-02-06T06:13:36.706344Z DEBUG Connection{peer=Client}: h2::codec::framed_read: received frame=WindowUpdate { stream_id: StreamId(0), size_increment: 983041 }
+2025-02-06T06:13:36.706451Z DEBUG Connection{peer=Client}: h2::codec::framed_read: received frame=Headers { stream_id: StreamId(1), flags: (0x4: END_HEADERS) }
+2025-02-06T06:13:36.706484Z DEBUG Connection{peer=Client}: h2::codec::framed_read: received frame=Data { stream_id: StreamId(1) }
+2025-02-06T06:13:36.706538Z DEBUG Connection{peer=Client}: h2::codec::framed_read: received frame=Headers { stream_id: StreamId(1), flags: (0x5: END_HEADERS | END_STREAM) }

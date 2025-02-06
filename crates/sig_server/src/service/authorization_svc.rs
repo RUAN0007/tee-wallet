@@ -70,9 +70,10 @@ impl Authorization for AuthorizationHandler {
             let mut w = AUTH_REGISTRY.write().map_err(|e| Status::internal(format!("Fail to lock AUTH_REGISTRY due to error {:?}", e)))?;
             w.add(auth_record).map_err(|e| Status::internal(format!("Fail to add auth record due to error {:?}", e)))?
         };
+        let reply = AuthorizationResp {
+            id: auth_id,
+        };
 
-        // Log or use the raw payload as needed
-        println!("Raw payload: {:?}", raw_payload);
-        Err(Status::internal("N.A."))
+        Ok(Response::new(reply))
     }
 }
