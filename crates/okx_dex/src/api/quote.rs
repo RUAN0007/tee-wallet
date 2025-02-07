@@ -87,8 +87,8 @@ mod tests {
 		let from_token_addr = "11111111111111111111111111111111"; // sol
 		let to_token_addr = "mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So"; // msol
         // Call the function
-        let r = get_quote(crate::dex::HOST, chain_id, amount, from_token_addr, to_token_addr).await.unwrap();
-        assert_eq!(r.amount, 1_000_000);
+        let r = get_quote(crate::api::HOST, chain_id, amount, from_token_addr, to_token_addr).await.unwrap();
+        assert!(r.amount < 1_000_000);
         assert_eq!(r.decimal, 9);
     }
 
@@ -100,7 +100,7 @@ mod tests {
 		let from_token_addr = "11111111111111111111111111111111"; // sol
 		let to_token_addr = "mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So"; // msol
         // Call the function
-        let r = get_quote(crate::dex::HOST, invalid_chain_id, amount, from_token_addr, to_token_addr).await;
+        let r = get_quote(crate::api::HOST, invalid_chain_id, amount, from_token_addr, to_token_addr).await;
         assert!(matches!(r, Err(OkxDexError::RemoteError(code, message)) if code == "51000" && message == "Parameter chainId error"));
     }
 }

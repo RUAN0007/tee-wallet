@@ -1,31 +1,21 @@
 
-use rsa::pkcs1::EncodeRsaPublicKey;
 use tonic::{Request, Response, Status};
 use crate::service::signing_svc::signing_server::Signing;
 use crate::service::authorization_svc::ServiceType;
-use crate::enclave;
 use crate::errors::SigServerError;
-use crate::service::auth_registry::AuthRecord;
-use crate::service::auth_registry::AuthRegistry;
 use crate::service::auth_registry::AUTH_REGISTRY;
 
 use solana_sdk::transaction::VersionedTransaction;
 use solana_sdk::message::VersionedMessage;
-use solana_sdk::signature::Signer;
 use solana_sdk::signer::keypair::Keypair;
 
-use serde_bytes::ByteBuf;
-use std::time::Instant;
 use std::time::SystemTime;
-use prost::Message;
-use utils::crypto::{decrypt, ed25519_pk_to_addr};
 use ed25519_dalek::VerifyingKey;
-use ed25519_dalek::Verifier;
-use crate::service::SIG_HEADER;
 use std::collections::HashMap;
 use crate::config::SigServerConfig;
 use solana_sdk::bs58;
-use utils::middleware::{header, ed25519_pk_from_header};
+use utils::middleware::ed25519_pk_from_header;
+use solana_sdk::signature::SeedDerivable;
 
 tonic::include_proto!("signing");
 
@@ -87,8 +77,7 @@ impl Signing for SigningHandler {
         if current_time < auth_record.start_at || current_time > auth_record.end_at {
             return Err(Status::unauthenticated("Authorization record is not valid at the current time"));
         }
-
-        let key_pair = Keypair::from_bytes(&auth_record.sk).map_err(|e| Status::internal(format!("Fail to create keypair from bytes due to error {:?}", e)))?;
+        let key_pair = Keypair::from_seed(&auth_record.sk).map_err(|e| Status::internal(format!("Fail to create keypair from bytes due to error {:?}", e)))?;
         let versioned_msg = bincode::deserialize::<VersionedMessage>(&request.get_ref().versioned_msg).map_err(|e| Status::invalid_argument(format!("Fail to create versioned message from slice due to error {:?}", e)))?;
 
         let signed_txn = VersionedTransaction::try_new(versioned_msg, &[&key_pair]).map_err(|e| Status::internal(format!("Fail to sign transaction due to error {:?}", e)))?;

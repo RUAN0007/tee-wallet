@@ -4,7 +4,6 @@ use std::hash::DefaultHasher;
 use std::collections::{HashMap, BTreeMap};
 use std::sync::RwLock;
 use once_cell::sync::Lazy;
-use solana_sdk::signer::SignerError;
 use crate::errors::SigServerError;
 use crate::service::authorization_svc::ServiceType;
 use crate::service::authorization_svc::KeyType;
@@ -78,8 +77,9 @@ impl AuthRegistry {
 		self.user_records_by_end_at.entry(record.addr.clone()).or_insert(BTreeMap::new()).insert(record.end_at, id);
 		Ok(id)
 	}
-
-	pub fn search(&self, addr : &str, svc_type : ServiceType, _condition : &str, _action : &str) -> Option<AuthRecord> {
+    
+    #[allow(unused_variables)]
+	pub fn search(&self, addr : &str, svc_type : ServiceType, condition : &str, action : &str) -> Option<AuthRecord> {
 		let now = SystemTime::now();
 		self.user_records_by_end_at.get(addr).and_then(|records| {
 			records.range(now..).next().and_then(|(_, id)| {
@@ -149,7 +149,7 @@ mod tests {
         let end_at = start_at + Duration::from_secs(3600);
         let record = create_test_record("test_addr", svc_type, start_at, end_at);
 
-        registry.add(record.clone());
+        registry.add(record.clone()).unwrap();
         let result = registry.search("test_addr", svc_type, "test_condition", "test_action");
         assert!(result.is_some());
         assert_eq!(result.unwrap(), record);

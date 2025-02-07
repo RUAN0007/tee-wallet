@@ -70,7 +70,7 @@ pub async fn get_swap_txn_data(host: &str, chain_id: u32, amount: u64, from_toke
 mod tests {
     use super::*;
     use tokio;
-	use crate::dex::tests::must_load_keypair;
+	use crate::api::tests::must_load_keypair;
 	use solana_sdk::signature::Signer;
 
     #[ignore = "require local config for API credential and keyfile path"]
@@ -85,7 +85,7 @@ mod tests {
 		let to_token_addr = "mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So"; // wsol
         let slippage = "0.05";
         // Call the function
-        let r = get_swap_txn_data(crate::dex::HOST, chain_id, amount, from_token_addr, to_token_addr, slippage, &addr).await;
+        let r = get_swap_txn_data(crate::api::HOST, chain_id, amount, from_token_addr, to_token_addr, slippage, &addr).await;
 		assert!(r.is_ok());
     }
 
@@ -101,7 +101,7 @@ mod tests {
 		let from_token_addr = "11111111111111111111111111111111"; // sol
 		let to_token_addr = "mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So"; // wsol
 
-        let r = get_swap_txn_data(crate::dex::HOST, invalid_chain_id, amount, from_token_addr, to_token_addr, slippage, &addr).await;
+        let r = get_swap_txn_data(crate::api::HOST, invalid_chain_id, amount, from_token_addr, to_token_addr, slippage, &addr).await;
 
         assert!(matches!(r, Err(DexError::RemoteError(code, message)) if code == "51000" && message == "Parameter chainId error"));
     }

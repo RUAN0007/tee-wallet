@@ -1,25 +1,15 @@
 use serde::Deserialize;
 use config::{Config, ConfigError, File};
-use trace::TraceConfig;
 use once_cell::sync::Lazy;
 use std::sync::RwLock;
-use trace::{init_tracing, WorkerGuard};
 
-#[derive(Debug, Clone, Deserialize)]
-pub struct DexConfig {
+#[derive(Debug, Clone, Deserialize, Default)]
+pub struct OkxDexConfig {
 	pub api_key : String,
 	pub secret_key : String,
 	pub passphrase : String,
 	pub project_id : String,
 }
-
-#[derive(Debug, Clone, Deserialize)]
-pub struct OkxDexConfig {
-	pub dex : DexConfig,
-	pub trace : TraceConfig,
-}
-
-// static LimitOrderConfig : config;
 
 impl OkxDexConfig {
     pub fn load(dir: &str) -> Result<Config, ConfigError> {
@@ -28,7 +18,7 @@ impl OkxDexConfig {
             // .add_source(File::with_name(&format!("{}/default", dir)))
             .add_source(File::with_name(&format!("{}/{}", dir, env)).required(false))
             .add_source(File::with_name(&format!("{}/local", dir)).required(false))
-            .add_source(config::Environment::with_prefix("LIMIT_ORDER"))
+            .add_source(config::Environment::with_prefix("OKX_DEX"))
             .build()
     }
 
@@ -40,23 +30,27 @@ impl OkxDexConfig {
 
 
 pub static CONFIG: Lazy<RwLock<OkxDexConfig>> = Lazy::new(|| {
-    RwLock::new(OkxDexConfig::try_new().expect("Failed to load config"))
+    RwLock::new(OkxDexConfig::default())
 });
 
-pub static _GUARDS : RwLock<Vec<WorkerGuard>> = RwLock::new(Vec::new()); // static lifetime to ensure the guards are not dropped
-
-pub fn must_init_with_path(cfg_path: &str) {
-    let cfg = OkxDexConfig::load(&cfg_path)
-    .expect(&format!("fail to load config file from {}", cfg_path).to_string());
-    let cfg : OkxDexConfig = cfg.try_deserialize().expect(&format!("fail to deserialize from {}", cfg_path).to_string());
-
-    *_GUARDS.write().unwrap() = init_tracing(cfg.trace.clone());
-
+pub fn must_init_with_config(cfg: OkxDexConfig) {
     *CONFIG.write().unwrap() = cfg;
 }
 
 #[cfg(test)]
+pub static _GUARDS : RwLock<Vec<trace::WorkerGuard>> = RwLock::new(Vec::new()); // static lifetime to ensure the guards are not dropped
+
+#[cfg(test)]
 #[ctor::ctor]
 fn init() {
-    must_init_with_path("config/"); // load local config from $CARGO_MANIFEST_DIR/config/local.toml
+    let cfg : OkxDexConfig = cfg.try_deserialize().unwrap();
+    must_init_with_config(cfg);
+
+    *_GUARDS.write().unwrap() = trace::init_tracing(trace::TraceConfig{
+        prefix: "okx_dex".to_string(),
+        dir: "logs".to_string(),
+        level: tracing::Level::DEBUG,
+        console: true,
+        flame: false,
+    });
 }

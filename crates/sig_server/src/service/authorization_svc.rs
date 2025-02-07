@@ -1,24 +1,15 @@
 
-use rsa::pkcs1::EncodeRsaPublicKey;
-use solana_sdk::bs58;
-use tonic::body;
 use tonic::{Request, Response, Status};
 use crate::service::authorization_svc::authorization_server::Authorization;
 use crate::enclave;
-use crate::errors;
 use crate::service::auth_registry::AuthRecord;
-use crate::service::auth_registry::AuthRegistry;
 use crate::service::auth_registry::AUTH_REGISTRY;
 use super::auth_registry::SearchParams;
 
-use serde_bytes::ByteBuf;
-use std::time::Instant;
+use std::convert::TryFrom;
 use std::time::SystemTime;
-use prost::Message;
 use utils::crypto::{decrypt, ed25519_pk_to_addr};
 use ed25519_dalek::SigningKey;
-use ed25519_dalek::Verifier;
-use crate::service::SIG_HEADER;
 use utils::middleware::header;
 
 
@@ -43,8 +34,6 @@ impl Authorization for AuthorizationHandler {
 
         // verifiy user pub key
         let addr_from_header = utils::middleware::addr_from_header(&request)?;
-        let user_pk_in_header = request.metadata().get(header::PUBKEY).ok_or(Status::unauthenticated("No pub key"))?.to_str().map_err(|e| Status::unauthenticated(format!("Invalid pub key due to error {:?}", e)))?;
-
         let user_sk_vec = decrypt(&enclave::RSA_KEYPAIR.0, request.get_ref().sk_ciphertext.as_slice())
             .map_err(|e| Status::invalid_argument(format!("Fail to decrypt the private key due to error {:?}", e)))?;
         let user_sk: [u8; 32] = user_sk_vec.as_slice().try_into().map_err(|_| Status::invalid_argument("Invalid private key length"))?;
@@ -61,7 +50,8 @@ impl Authorization for AuthorizationHandler {
         let end_at = request.get_ref().end_at.ok_or(Status::invalid_argument("end_at is required"))?;
         let end_at : SystemTime = SystemTime::try_from(end_at).map_err(|e| Status::invalid_argument(format!("fail to parse start_at timestamp to SystemTime due to error {:?}", e)))?;
 
-        let svc_type = ServiceType::from_i32(request.get_ref().svc_type).ok_or(Status::invalid_argument("Invalid service type"))?;
+        
+        let svc_type = ServiceType::try_from(request.get_ref().svc_type).map_err(|_| Status::invalid_argument("Invalid service type"))?;
 
         let auth_record = AuthRecord {
             addr: addr,
@@ -94,7 +84,7 @@ impl Authorization for AuthorizationHandler {
         }
         utils::middleware::validate_body_hash(&request)?;
 
-        let svc_type = ServiceType::from_i32(request.get_ref().svc_type).ok_or(Status::invalid_argument("Invalid service type"))?;
+        let svc_type = ServiceType::try_from(request.get_ref().svc_type).map_err(|_| Status::invalid_argument("Invalid service type"))?;
         // TODO: enforce two fields are required. 
         let before = request.get_ref().before.map_or(Ok(SystemTime::now()), |t| {SystemTime::try_from(t).map_err(|e| Status::invalid_argument(format!("fail to parse before timestamp to SystemTime due to error {:?}", e)))})?;
         let after = request.get_ref().after.map_or(Ok(SystemTime::now()), |t| {SystemTime::try_from(t).map_err(|e| Status::invalid_argument(format!("fail to parse before timestamp to SystemTime due to error {:?}", e)))})?;

@@ -42,6 +42,9 @@ tonic-build = {workspace = true}
 [dev-dependencies]
 proxy = { path = "../proxy" }
 ctor = {workspace = true}
+okx-dex = {path = "../okx_dex"}
+solana-client = {workspace = true}
+dialoguer = {workspace = true}
 
 [target.x86_64-unknown-linux-gnu.dependencies]
 proxy = { path = "../proxy" }

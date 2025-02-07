@@ -1,5 +1,5 @@
 [package]
-name = "okx_dex"
+name = "okx-dex"
 version = "0.1.0"
 edition = "2021"
 

@@ -1,10 +1,7 @@
 use tonic::{async_trait, Status};
-use tonic_middleware::{
-    InterceptorFor, Middleware, MiddlewareFor, MiddlewareLayer, RequestInterceptor,
-    RequestInterceptorLayer, ServiceBound,
-};
+use tonic_middleware::RequestInterceptor;
 use tonic::body::BoxBody;
-use tonic::codegen::http::{HeaderValue, Request, Response};
+use tonic::codegen::http::Request;
 use ed25519_dalek::{Verifier, VerifyingKey, SigningKey, Signer};
 use tonic::metadata::{MetadataValue, Ascii};
 use std::str::FromStr;

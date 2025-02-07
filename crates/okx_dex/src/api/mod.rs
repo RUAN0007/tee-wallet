@@ -16,7 +16,7 @@ pub fn get_headers(method : &str, req_path_with_query_str: &str) -> HeaderMap {
     tracing::debug!("current_timestamp: {:?}", current_timestamp);
 	let msg_to_sign = current_timestamp.clone() + method + req_path_with_query_str;
 
-	let dex_config = CONFIG.read().unwrap().dex.clone();
+	let dex_config = CONFIG.read().unwrap().clone();
 	let secret_key = dex_config.secret_key;
 	let mut mac = Hmac::<Sha256>::new_from_slice(secret_key.as_bytes())
         .expect("HMAC can take key of any size");
@@ -71,7 +71,7 @@ mod tests {
     use bincode;
 	use std::env;
 
-    use crate::dex::swap::get_swap_txn_data;
+    use crate::api::swap::get_swap_txn_data;
 
 	pub fn must_load_keypair() -> Keypair {
 		// Get the path from the environment variable
@@ -92,6 +92,7 @@ mod tests {
 		// Create the keypair from the bytes
 		Keypair::from_bytes(&key_bytes).unwrap()
 	}
+
     #[ignore = "require local config for API credential and key path"]
     #[tokio::test]
     async fn test_generate_broadcast_tx() {
@@ -104,7 +105,7 @@ mod tests {
 		let to_token_addr = "mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So"; // msol
         let slippage = "0.05";
         // Call the function
-        let txn_data = get_swap_txn_data(crate::dex::HOST, chain_id, amount, from_token_addr, to_token_addr, slippage, &addr).await.unwrap();
+        let txn_data = get_swap_txn_data(crate::api::HOST, chain_id, amount, from_token_addr, to_token_addr, slippage, &addr).await.unwrap();
         let rpc_client = RpcClient::new(std::env::var("SOLANA_RPC_URL").unwrap());
 
         let txn = bincode::deserialize::<VersionedTransaction>(&txn_data).unwrap();

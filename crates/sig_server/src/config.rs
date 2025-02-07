@@ -67,9 +67,6 @@ impl SigServerConfig {
     }
 }
 
-use std::sync::RwLock;
-use trace::{init_tracing, WorkerGuard};
-
 #[cfg(test)]
 pub static _GUARDS : RwLock<Vec<WorkerGuard>> = RwLock::new(Vec::new()); // static lifetime to ensure the guards are not dropped
 

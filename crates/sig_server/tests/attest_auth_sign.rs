@@ -31,10 +31,13 @@ mod tests {
     use attestation_client::AttestationClient;
     use authorization_client::AuthorizationClient;
     use tonic_middleware::InterceptorFor;
+    use okx_dex::config::OkxDexConfig;
 
+    use crate::tests::signing_client::SigningClient;
     use solana_sdk::transaction::VersionedTransaction;
     use solana_sdk::signature::Signer;
     use solana_sdk::signer::keypair::Keypair;
+    use solana_client::nonblocking::rpc_client::RpcClient;
     use sig_server::config::SigServerConfig;
     use std::path::Path;
     use std::env;
@@ -44,6 +47,8 @@ mod tests {
     use prost_types::Timestamp;
 
     use serde_json::Value;
+
+    use okx_dex::config::CONFIG as OKX_CONFIG;
 
     tonic::include_proto!("attestation");
     tonic::include_proto!("authorization");
@@ -55,12 +60,12 @@ mod tests {
     static SERVER : OnceCell<()> = OnceCell::const_new();
     // static Vec<WorkerGuard> 
     static CONFIG : Lazy<RwLock<SigServerConfig>> = Lazy::new(|| {
-        let current_dir = env::current_dir().unwrap();
-        println!("Current working directory: {:?}", current_dir);
-
-
         let cfg = SigServerConfig::load("config/").unwrap();
         let cfg : SigServerConfig = cfg.try_deserialize().unwrap();
+
+        let dex_cfg = OkxDexConfig::load("../okx_dex/config").unwrap();
+        let dex_cfg : OkxDexConfig = dex_cfg.try_deserialize().unwrap();
+        okx_dex::config::must_init_with_config(dex_cfg);
 
         RwLock::new(cfg)
     });
@@ -88,10 +93,7 @@ mod tests {
         });
 	}
 
-	pub fn must_load_keypair() -> Keypair {
-		// Get the path from the environment variable
-		let key_path = env::var("SOLANA_KEY_PATH").expect("must set SOLANA_KEY_PATH");
-		
+	pub fn must_load_keypair(key_path : String) -> Keypair {
 		// Read the private key file
 		let key_data = fs::read_to_string(Path::new(&key_path)).expect("fail to read from key_path");
 		
@@ -108,6 +110,7 @@ mod tests {
 		Keypair::from_bytes(&key_bytes).unwrap()
 	}
 
+    #[ignore = "required OKX DEX API Credential"]
     #[tokio::test]
     async fn attest_auth_sign() {
         let _ = init_tracing(CONFIG.read().unwrap().trace.clone());
@@ -132,14 +135,28 @@ mod tests {
         let public_key = RsaPublicKey::from_pkcs1_der(&pk_bytes).expect("fail for pkcs der");
 
         // 2. Encrypt the user private key with the TEE public key, and upload to TEE to authorize. 
-        // let key_pair = must_load_keypair();
 
-        // a random private key only for testing. 
-        let user_sk_pair = Keypair::new();
-        tracing::debug!("bs58 encoded pk: {:?}", solana_sdk::bs58::encode(user_sk_pair.pubkey()).into_string());
+        let user_key_pair = {
+            if let Ok(key_path) = env::var("SOLANA_KEY_PATH") {
+                let confirm = dialoguer::Confirm::new()
+                    .with_prompt(format!("Do you want to use the key path: {}?", key_path))
+                    .interact()
+                    .unwrap();
+                
+                if confirm {
+                    must_load_keypair(key_path)
+                } else {
+                    Keypair::new()
+                }
+            } else {
+                Keypair::new()
+            }
+        };
+
+        tracing::debug!("bs58 encoded pk: {:?}", solana_sdk::bs58::encode(user_key_pair.pubkey()).into_string());
         // example output: J9yNMaR2zpkAGNK6xg3zLtV8sxB1EWXrYbC6JwhYx6nv
 
-        let user_sk_bytes = user_sk_pair.secret().to_bytes();
+        let user_sk_bytes = user_key_pair.secret().to_bytes();
         let user_sk_ciphertext = encrypt(&public_key, &user_sk_bytes).expect("fail to encrypt");
         tracing::debug!("sk_ciphertext: {:?}", hex::encode(&user_sk_ciphertext));
 
@@ -152,7 +169,7 @@ mod tests {
         };
 
         let end_at = Timestamp {
-            seconds: 1738886400, // 2025-02-07 00:00:00 GMT
+            seconds: 2738800000, // long enough for a valid authorization
             nanos: 0,
         };
         let auth_req = AuthorizationReq {
@@ -174,7 +191,7 @@ mod tests {
         tracing::debug!("request: {:?}", request);
         // the corresponding header: {"x-signature": "1ec6aee144ffbeb8aa54e526c85d3a15ee4e01bd8de2d43d9298932a90ee3797366f1d85b9a2baa71255ad2f9e170a76219ce762ad3be5532aa58c4df666ec07", "x-pubkey": "J9yNMaR2zpkAGNK6xg3zLtV8sxB1EWXrYbC6JwhYx6nv", "x-curve": "ed25519", "x-body-sha256": "e5e34dc33cda69fdc411c6685a6f153c26f41768f36137e47f040ac4483ba900"}
 
-        let mut authorization_cli = AuthorizationClient::connect(url).await.unwrap();
+        let mut authorization_cli = AuthorizationClient::connect(url.clone()).await.unwrap();
 		let response = authorization_cli.authorize(request).await;
         assert!(response.is_ok(), "response: {:?}", response);
         let auth_id = response.unwrap().into_inner().id;
@@ -189,6 +206,47 @@ mod tests {
         assert_eq!(auth_id, response.get_ref().records[0].id);
 
         // 4. use DEX aggregator to get a unsigned transaction
+        let chain_id = 501;
+		let amount = 1_000_000; // 0.001 sol
+		let from_token_addr = "11111111111111111111111111111111"; // sol
+		let to_token_addr = "mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So"; // msol
+        let slippage = "0.05";
+        // Call the function
+        let txn_data = okx_dex::api::swap::get_swap_txn_data(okx_dex::api::HOST, chain_id, amount, from_token_addr, to_token_addr, slippage, &user_key_pair.pubkey().to_string()).await.unwrap();
+        let txn = bincode::deserialize::<VersionedTransaction>(&txn_data).unwrap();
+        assert!(txn.verify_and_hash_message().is_err(), "should fail as no signature");
+
+        // 5. send the signing request to sig server
+        let mut msg = txn.message;
+
+        let rpc_client = RpcClient::new(std::env::var("SOLANA_RPC_URL").unwrap());
+        let recent_blockhash = rpc_client.get_latest_blockhash().await.unwrap();
+        msg.set_recent_blockhash(recent_blockhash);
+
+
+        let msg = bincode::serialize(&msg).unwrap();
+        let signing_req = SolanaSignReq {
+            versioned_msg: msg,
+            user_addr: user_key_pair.pubkey().to_string(),
+        };
+
+        let mut signing_cli = SigningClient::connect(url.clone()).await.unwrap();
+        let copy_trading_svc_bytes : [u8;32] = hex::decode(utils::TEST_ED25519_SVC_SK_HEX).unwrap().try_into().unwrap();
+        let copy_trading_svc_sk = SigningKey::from_bytes(&copy_trading_svc_bytes);
+        let signing_req = utils::middleware::gen_ed25519_signed_req(signing_req, &copy_trading_svc_sk).unwrap();
+        let signing_resp = signing_cli.solana_sign(signing_req).await;
+        assert!(signing_resp.is_ok(), "signing_resp: {:?}", signing_resp);
+        let signed_txn = signing_resp.unwrap().into_inner().versioned_txn;
+        let signed_txn = bincode::deserialize::<VersionedTransaction>(&signed_txn).unwrap();
+
+        assert!(signed_txn.verify_and_hash_message().is_ok(), "should pass as signed");
+
+        // 6. optional: broadcast the transaction
+        if std::env::var("BROADCAST_TX").unwrap_or("".to_owned()) == "1" {
+            tracing::info!("Broadcasting transaction...");
+            let signature = rpc_client.send_and_confirm_transaction(&signed_txn).await.unwrap();
+            tracing::info!("Transaction signature: {:?}", signature);
+        }
 
     }
 }
