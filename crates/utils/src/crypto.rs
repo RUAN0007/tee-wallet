@@ -2,7 +2,8 @@ use rsa::{RsaPrivateKey, RsaPublicKey, Pkcs1v15Encrypt};
 use rand::rngs::OsRng;
 use rand::{rngs::StdRng, SeedableRng};
 use std::error::Error;
-use sha3::{Digest, Keccak256};
+use sha2::{Sha256, Digest};
+
 
 pub fn init_rsa_keypair_with_seed(seed: [u8; 32]) -> (RsaPrivateKey, RsaPublicKey) {
     let mut rng = StdRng::from_seed(seed);
@@ -36,11 +37,18 @@ pub fn ed25519_pk_to_addr(pk: &ed25519_dalek::VerifyingKey) -> String {
     addr
 }
 
-pub fn secp256k1_pk_to_addr(pk: &secp256k1::PublicKey) -> String {
-    let serialized_pk = pk.serialize_uncompressed();
-    let hash = Keccak256::digest(&serialized_pk[1..]); // Skip the first byte (0x04)
-    let addr = &hash[12..]; // Take the last 20 bytes
-    format!("0x{}", hex::encode(addr))
+
+// pub fn secp256k1_pk_to_addr(pk: &secp256k1::PublicKey) -> String {
+//     let serialized_pk = pk.serialize_uncompressed();
+//     let hash = Keccak256::digest(&serialized_pk[1..]); // Skip the first byte (0x04)
+//     let addr = &hash[12..]; // Take the last 20 bytes
+//     format!("0x{}", hex::encode(addr))
+// }
+
+pub fn sha256(data: &[u8]) -> Vec<u8> {
+    let mut hasher = Sha256::new();
+    hasher.update(data);
+    hasher.finalize().to_vec()
 }
 
 #[cfg(test)]

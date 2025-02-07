@@ -8,9 +8,8 @@ service Signing {
 }
 
 message SolanaSignReq {
-  bytes svc_pub_key = 1;
-  bytes versioned_msg = 2;
-  string user_addr = 3;
+  bytes versioned_msg = 1;
+  string user_addr = 2;
 }
 
 message SolanaSignResp {

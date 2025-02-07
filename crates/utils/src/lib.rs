@@ -1,4 +1,5 @@
 pub mod crypto;
+pub mod middleware;
 
 use prost_types::Timestamp;
 use std::time::{SystemTime, UNIX_EPOCH};

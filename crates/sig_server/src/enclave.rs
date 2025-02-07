@@ -5,13 +5,25 @@ use tonic::transport::Server;
 use crate::{
     errors::SigServerError,
     config::SigServerConfig,
+
     service::attestation_svc::{
         attestation_server::AttestationServer
         , AttestationHandler},
 
+    service::authorization_svc::{
+        authorization_server::AuthorizationServer
+        , AuthorizationHandler},
+
+    service::signing_svc::{
+        signing_server::SigningServer
+        , SigningHandler},
 };
 use rsa::{RsaPrivateKey, RsaPublicKey};
 use once_cell::sync::Lazy;
+use tonic_middleware::{
+    InterceptorFor, Middleware, MiddlewareFor, MiddlewareLayer, RequestInterceptor,
+    RequestInterceptorLayer, ServiceBound,
+};
 
 pub static RSA_KEYPAIR: Lazy<(RsaPrivateKey, RsaPublicKey)> = Lazy::new(|| {
     #[cfg(all(not(target_os = "linux"), debug_assertions))] 
@@ -138,6 +150,15 @@ pub async fn start(cfg : SigServerConfig) -> Result<(), SigServerError> {
 
         let mut s = Server::builder()
             .add_service(AttestationServer::new(AttestationHandler::default()));
+
+        let authorization_service = AuthorizationServer::new(AuthorizationHandler::default());
+        let auth_interceptor = utils::middleware::AuthInterceptor {};
+
+        s = s.add_service(InterceptorFor::new(authorization_service, auth_interceptor.clone()));
+
+        let signing_handler = SigningHandler::new(&cfg).expect("fail to create signing handler");
+        let signing_service = SigningServer::new(signing_handler);
+        s = s.add_service(InterceptorFor::new(signing_service, auth_interceptor.clone()));
 
         #[cfg(debug_assertions)]  
         {

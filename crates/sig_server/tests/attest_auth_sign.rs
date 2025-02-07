@@ -53,9 +53,17 @@ mod tests {
 
         tokio::spawn( async move {
         let stream = tokio_stream::wrappers::TcpListenerStream::new(listener);
+
+        let authorization_service = AuthorizationServer::new(AuthorizationHandler::default());
+        let auth_interceptor = utils::middleware::AuthInterceptor {};
+
+        let signing_handler = SigningHandler::new(&cfg).expect("fail to create signing handler");
+        let signing_service = SigningServer::new(signing_handler);
+
         Server::builder()
             .add_service(AttestationServer::new(AttestationHandler::default()))
-            .add_service(AuthorizationServer::new(AuthorizationHandler::default()))
+            .add_service(InterceptorFor::new(authorization_service, auth_interceptor.clone()))
+            .add_service(InterceptorFor::new(signing_service, auth_interceptor.clone()))
             .serve_with_incoming(stream)
             .await
             .unwrap();

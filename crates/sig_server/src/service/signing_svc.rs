@@ -25,6 +25,7 @@ use crate::service::SIG_HEADER;
 use std::collections::HashMap;
 use crate::config::SigServerConfig;
 use solana_sdk::bs58;
+use utils::middleware::header;
 
 tonic::include_proto!("signing");
 
@@ -69,19 +70,21 @@ impl Signing for SigningHandler {
         &self,
         request: Request<SolanaSignReq>,
     ) -> Result<Response<SolanaSignResp>, Status> {
-        let signature = request.metadata().get(SIG_HEADER).ok_or(Status::unauthenticated("No signature"))?.to_str().map_err(|e| Status::unauthenticated(format!("Invalid signature due to error {:?}", e)))?;
-        let signature = hex::decode(signature).map_err(|e| Status::unauthenticated(format!("Fail to hex decode signature due to error {:?}", e)))?;
-        let signature : [u8; 64] = signature.as_slice().try_into().map_err(|_| Status::unauthenticated("Invalid signature length"))?;
-        let signature = ed25519_dalek::Signature::from_bytes(&signature);
+        let curve = request.metadata().get(header::CURVE).ok_or(Status::unauthenticated("No curve"))?.to_str().map_err(|e| Status::unauthenticated(format!("Invalid curve due to error {:?}", e)))?;
 
-        let svc_verifing_key : [u8;32] = request.get_ref().svc_pub_key.as_slice().try_into().map_err(|e| Status::invalid_argument(format!("Fail to convert service public key to array due to error {:?}", e)))?;
+        if curve != header::ED25519 {
+            return Err(Status::unauthenticated("curve other than ed25519 not supported"));
+        }
 
-        let svc_verifing_key = VerifyingKey::from_bytes(&svc_verifing_key).map_err(|e| Status::invalid_argument(format!("Fail to create ed25519 verifying key from bytes due to error {:?}", e)))?;
+        utils::middleware::validate_body_hash(&request)?;
 
-        let svc_type = self.trusted_svcs.get(&svc_verifing_key).ok_or(Status::invalid_argument("Service not trusted"))?;
+        let svc_pk_in_header = request.metadata().get(header::PUBKEY).ok_or(Status::unauthenticated("No pub key"))?.to_str().map_err(|e| Status::unauthenticated(format!("Invalid pub key due to error {:?}", e)))?;
 
-        let raw_req_payload : Vec<u8> = request.get_ref().encode_to_vec();
-        svc_verifing_key.verify(&raw_req_payload, &signature).map_err(|e| Status::unauthenticated(format!("Fail to verify signature due to error {:?}", e)))?;
+        let svc_pk = bs58::decode(svc_pk_in_header).into_vec().map_err(|e| Status::unauthenticated(format!("Fail to decode base58 encoded public key due to error {:?}", e)))?;
+        let svc_pk : [u8;32] = svc_pk.as_slice().try_into().map_err(|e| Status::unauthenticated(format!("Fail to convert base58 decoded public key to array due to error {:?}", e)))?;
+        let svc_pk = VerifyingKey::from_bytes(&svc_pk).map_err(|e| Status::unauthenticated(format!("Fail to create ed25519 verifying key from bytes due to error {:?}", e)))?;
+
+        let svc_type = self.trusted_svcs.get(&svc_pk).ok_or(Status::invalid_argument("Service not trusted"))?;
 
         let user_addr = request.get_ref().user_addr.clone();
         let auth_record = {
