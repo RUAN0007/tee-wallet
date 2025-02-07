@@ -1,6 +1,8 @@
 #[cfg(test)]
 mod tests {
-	use rsa::RsaPublicKey;
+	use ed25519_dalek::SigningKey;
+    use once_cell::sync::Lazy;
+    use rsa::RsaPublicKey;
     use sha2::digest::Key;
     use solana_sdk::signer::SeedDerivable;
     use trace::init_tracing;
@@ -11,6 +13,7 @@ mod tests {
     use tokio::sync::OnceCell;
     use tonic::metadata::{MetadataValue, Ascii, Binary};
     use std::str::FromStr;
+    use std::sync::RwLock;
 	use sig_server::service::attestation_svc::{
 			attestation_server::AttestationServer, 
 			AttestationHandler};
@@ -20,10 +23,14 @@ mod tests {
 	use sig_server::service::authorization_svc::{
 			authorization_server::AuthorizationServer, 
 			AuthorizationHandler};
+	use sig_server::service::signing_svc::{
+			signing_server::SigningServer, 
+			SigningHandler};
     use sig_server::service::SIG_HEADER;
     use attestation_doc_validation::attestation_doc::decode_attestation_document;
     use attestation_client::AttestationClient;
     use authorization_client::AuthorizationClient;
+    use tonic_middleware::InterceptorFor;
 
     use solana_sdk::transaction::VersionedTransaction;
     use solana_sdk::signature::Signer;
@@ -40,12 +47,23 @@ mod tests {
 
     tonic::include_proto!("attestation");
     tonic::include_proto!("authorization");
-    tonic::include_proto!("sign");
+    tonic::include_proto!("signing");
 
     const HOST : &str = "127.0.0.1";
     const PORT : u16 = 50053; // must be diff between each test case
 
     static SERVER : OnceCell<()> = OnceCell::const_new();
+    // static Vec<WorkerGuard> 
+    static CONFIG : Lazy<RwLock<SigServerConfig>> = Lazy::new(|| {
+        let current_dir = env::current_dir().unwrap();
+        println!("Current working directory: {:?}", current_dir);
+
+
+        let cfg = SigServerConfig::load("config/").unwrap();
+        let cfg : SigServerConfig = cfg.try_deserialize().unwrap();
+
+        RwLock::new(cfg)
+    });
 
     async fn start_server() {
 		let addr : String = format!("{}:{}", HOST, PORT);
@@ -57,7 +75,7 @@ mod tests {
         let authorization_service = AuthorizationServer::new(AuthorizationHandler::default());
         let auth_interceptor = utils::middleware::AuthInterceptor {};
 
-        let signing_handler = SigningHandler::new(&cfg).expect("fail to create signing handler");
+        let signing_handler = SigningHandler::new(&CONFIG.read().unwrap()).expect("fail to create signing handler");
         let signing_service = SigningServer::new(signing_handler);
 
         Server::builder()
@@ -92,10 +110,7 @@ mod tests {
 
     #[tokio::test]
     async fn attest_auth_sign() {
-
-        let cfg = SigServerConfig::load("config/").unwrap();
-        let cfg : SigServerConfig = cfg.try_deserialize().unwrap();
-        let _ = init_tracing(cfg.trace.clone());
+        let _ = init_tracing(CONFIG.read().unwrap().trace.clone());
 
         SERVER.get_or_init(start_server).await;
 
@@ -120,14 +135,16 @@ mod tests {
         // let key_pair = must_load_keypair();
 
         // a random private key only for testing. 
-        let random_sk = hex::decode(utils::TEST_ED25519_SK_HEX).unwrap();
+        let user_sk_pair = Keypair::new();
+        tracing::debug!("bs58 encoded pk: {:?}", solana_sdk::bs58::encode(user_sk_pair.pubkey()).into_string());
+        // example output: J9yNMaR2zpkAGNK6xg3zLtV8sxB1EWXrYbC6JwhYx6nv
 
-        let key_pair = Keypair::from_seed(&random_sk).unwrap();
-        tracing::info!("bs58 encoded sk: {:?}", solana_sdk::bs58::encode(key_pair.pubkey()).into_string());
+        let user_sk_bytes = user_sk_pair.secret().to_bytes();
+        let user_sk_ciphertext = encrypt(&public_key, &user_sk_bytes).expect("fail to encrypt");
+        tracing::debug!("sk_ciphertext: {:?}", hex::encode(&user_sk_ciphertext));
 
-        let sk_bytes = key_pair.secret().to_bytes();
-        let encrypted_sk = encrypt(&public_key, &sk_bytes).expect("fail to encrypt");
-        tracing::debug!("encrypted_sk: {:?}", hex::encode(&encrypted_sk));
+        // note: the ciphertext is different for each encryption, due to padding.
+        // the corresponding ciphertext: 465464e59b2ea8b417cb6eb539c7aa24faa30feae432be3280df56b94f54678350931d97f61b13a36404f94a60cd11fab1af03e6fef416b2c2ad00344ecf6d8c44215306c159bc63500851db602b24876f52be9e62d08345ccc0ccb7876426e0b45c9282a41d38d06ab4a3a55a8cde65f816eff4719323bc93244c1c7e2e8adaceac9a9d095ece7996ce4873769da3266a3fc3463815b4da0f716cf8ad83366451bc227998e9a4d2bd5b06033452d78c575ad0f225dac94938085901431c682a178ba6710f37c26c0829ecf5ad8fbd455ab8605d54226ae7509dbadcece22aa4959bbace0666ad686e78d20763c8d385f5cae088114bf80dfc55692c0632cfc5
 
         let start_at = Timestamp {
             seconds: 1738800000, // 2025-02-06 00:00:00 GMT
@@ -144,29 +161,34 @@ mod tests {
             end_at : Some(end_at),
             action: "".to_owned(),
             condition: "".to_owned(),
-            sk_ciphertext: encrypted_sk, // a possible ciphertext, (due to padding, ciphertext is diff for each encryptions): 6f59dfc5d9d164aa7e848c49ab265b8c360fb142d579bd698a2d986d6307982b862136b9a724ad6ded7d51198879d5599ea78933d8c531dd3ceab3edb86bce59c719d919dc5461a6ffd64d98ae57d4916792156197fc6232cc660e66d390f43969be70abe957664e1a9e62005d9ffea078135205117fd7a08fa300d6ceba2017dbbf9c9d7b344443ecffb0cac2ad1814f2a2902e6e1802016db802c5ea8928e195b5fa1e893a0856c20e5791d88d872aaed310e5652fba63480617f79e3746a5b38240bcbbbd2b77f16c21e660cd8ca9e2d8cae738e337019b27b72c75755fe7806daefffb2bbc98bc923277d5fbfcdba08bf9897596f0c70bbb9e14b9a08032
+            sk_ciphertext: user_sk_ciphertext, // a possible ciphertext, (due to padding, ciphertext is diff for each encryptions): 
 
             key_type: KeyType::Ed25519 as i32, // 0
         };
-        let mut request = Request::new(auth_req);
-        let auth_req_bytes = request.get_ref().encode_to_vec();
-        tracing::debug!("auth_req_bytes_hex: {:?}", hex::encode(&auth_req_bytes));
-        // the corresponding request encoding: 080112060880f78fbd061a0608809a95bd063280026f59dfc5d9d164aa7e848c49ab265b8c360fb142d579bd698a2d986d6307982b862136b9a724ad6ded7d51198879d5599ea78933d8c531dd3ceab3edb86bce59c719d919dc5461a6ffd64d98ae57d4916792156197fc6232cc660e66d390f43969be70abe957664e1a9e62005d9ffea078135205117fd7a08fa300d6ceba2017dbbf9c9d7b344443ecffb0cac2ad1814f2a2902e6e1802016db802c5ea8928e195b5fa1e893a0856c20e5791d88d872aaed310e5652fba63480617f79e3746a5b38240bcbbbd2b77f16c21e660cd8ca9e2d8cae738e337019b27b72c75755fe7806daefffb2bbc98bc923277d5fbfcdba08bf9897596f0c70bbb9e14b9a08032
 
-        let signature : [u8;64] = key_pair.sign_message(&auth_req_bytes).try_into().unwrap();
-        let req_signature_hex = hex::encode(&signature);
-        tracing::debug!("auth_req_signature_hex: {:?}", req_signature_hex);
-        // the corresponding signature bfbc39064be4139204698bed58e827a184120c29cd960cae60b6e04da8e86e9797d38cd4c05a2e18f35201793552c72e69bc28b9036ce8ca05a9f0f41d0d4207
+        tracing::debug!("auth_req: {:?}", hex::encode(&auth_req.encode_to_vec()));
+        // the corresponding hex encoded auth_req: 080112060880f78fbd061a0608809a95bd06328002465464e59b2ea8b417cb6eb539c7aa24faa30feae432be3280df56b94f54678350931d97f61b13a36404f94a60cd11fab1af03e6fef416b2c2ad00344ecf6d8c44215306c159bc63500851db602b24876f52be9e62d08345ccc0ccb7876426e0b45c9282a41d38d06ab4a3a55a8cde65f816eff4719323bc93244c1c7e2e8adaceac9a9d095ece7996ce4873769da3266a3fc3463815b4da0f716cf8ad83366451bc227998e9a4d2bd5b06033452d78c575ad0f225dac94938085901431c682a178ba6710f37c26c0829ecf5ad8fbd455ab8605d54226ae7509dbadcece22aa4959bbace0666ad686e78d20763c8d385f5cae088114bf80dfc55692c0632cfc5
 
-        let mut authorization_cli = AuthorizationClient::connect(url.clone()).await.unwrap();
-        request.metadata_mut().insert(SIG_HEADER, MetadataValue::<Ascii>::from_str(&req_signature_hex).unwrap());
+        let user_signing_key = SigningKey::from_bytes(&user_sk_bytes);
+        let request = utils::middleware::gen_ed25519_signed_req(auth_req, &user_signing_key).unwrap();
+        tracing::debug!("request: {:?}", request);
+        // the corresponding header: {"x-signature": "1ec6aee144ffbeb8aa54e526c85d3a15ee4e01bd8de2d43d9298932a90ee3797366f1d85b9a2baa71255ad2f9e170a76219ce762ad3be5532aa58c4df666ec07", "x-pubkey": "J9yNMaR2zpkAGNK6xg3zLtV8sxB1EWXrYbC6JwhYx6nv", "x-curve": "ed25519", "x-body-sha256": "e5e34dc33cda69fdc411c6685a6f153c26f41768f36137e47f040ac4483ba900"}
 
-
+        let mut authorization_cli = AuthorizationClient::connect(url).await.unwrap();
 		let response = authorization_cli.authorize(request).await;
-
         assert!(response.is_ok(), "response: {:?}", response);
+        let auth_id = response.unwrap().into_inner().id;
 
-        // 3. Send a sign request to the TEE
+        // 3. get auth record
+        let get_req = GetAuthRecordsReq::default();
+        let request = utils::middleware::gen_ed25519_signed_req(get_req, &user_signing_key).unwrap();
+        let response = authorization_cli.get_authorization_records(request).await;
+        assert!(response.is_ok(), "response: {:?}", response);
+        let response = response.unwrap();
+        assert_eq!(1, response.get_ref().records.len());
+        assert_eq!(auth_id, response.get_ref().records[0].id);
+
+        // 4. use DEX aggregator to get a unsigned transaction
 
     }
 }

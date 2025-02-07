@@ -91,7 +91,7 @@ impl AuthRegistry {
     pub fn search_by_params(&self, params: &SearchParams) -> Result<Vec<AuthRecord>, SigServerError> {
         let mut result = Vec::new();
         if let Some(records) = self.user_records_by_end_at.get(&params.addr) {
-            for (_end_at, id) in records.range(params.after..params.before) {
+            for (_end_at, id) in records {
                 if let Some(record) = self.records.get(id) {
                     result.push(record.clone());
                 }

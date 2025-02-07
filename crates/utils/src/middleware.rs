@@ -1,5 +1,3 @@
-use std::boxed;
-
 use tonic::{async_trait, Status};
 use tonic_middleware::{
     InterceptorFor, Middleware, MiddlewareFor, MiddlewareLayer, RequestInterceptor,
@@ -7,7 +5,9 @@ use tonic_middleware::{
 };
 use tonic::body::BoxBody;
 use tonic::codegen::http::{HeaderValue, Request, Response};
-use ed25519_dalek::{Verifier, VerifyingKey};
+use ed25519_dalek::{Verifier, VerifyingKey, SigningKey, Signer};
+use tonic::metadata::{MetadataValue, Ascii};
+use std::str::FromStr;
 
 use crate::crypto;
 
@@ -79,4 +79,25 @@ pub fn ed25519_pk_from_header<T : prost::Message> (request : &tonic::Request<T>)
 pub fn addr_from_header<T : prost::Message> (request : &tonic::Request<T>) -> Result<String, tonic::Status> {
 	let user_pk = ed25519_pk_from_header(request)?;
 	Ok(crypto::ed25519_pk_to_addr(&user_pk))
+}
+
+pub fn gen_ed25519_signed_req<T : prost::Message> (request_body : T, sk : &SigningKey) -> Result<tonic::Request<T>, tonic::Status> {
+	let body_sha256 = crypto::sha256(&request_body.encode_to_vec());
+	let signature = sk.sign(&body_sha256);
+	let pk = sk.verifying_key();
+	let pk_bs58 = bs58::encode(pk.to_bytes()).into_string();
+
+	let signature_hex = hex::encode(signature.to_bytes());
+	let mut request = tonic::Request::new(request_body);
+	let signature_header_val = MetadataValue::<Ascii>::from_str(&signature_hex).map_err(|e| Status::internal(format!("Fail to create metadata value from signature hex due to error {:?}", e)))?;
+	let pubkey_header_val = MetadataValue::<Ascii>::from_str(&pk_bs58).map_err(|e| Status::internal(format!("Fail to create metadata value from public key bytes due to error {:?}", e)))?;
+	let curve_header_val = MetadataValue::<Ascii>::from_str(header::ED25519).map_err(|e| Status::internal(format!("Fail to create metadata value from curve type due to error {:?}", e)))?;
+	let body_sha245_val = MetadataValue::<Ascii>::from_str(&hex::encode(body_sha256)).map_err(|e| Status::internal(format!("Fail to create metadata value from body sha256 due to error {:?}", e)))?;
+
+	request.metadata_mut().insert(header::SIGNATURE, signature_header_val);
+	request.metadata_mut().insert(header::PUBKEY, pubkey_header_val);
+	request.metadata_mut().insert(header::CURVE, curve_header_val);
+	request.metadata_mut().insert(header::BODY_SHA256, body_sha245_val);
+
+	Ok(request)
 }

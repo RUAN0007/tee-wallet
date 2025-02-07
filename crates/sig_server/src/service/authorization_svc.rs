@@ -92,6 +92,8 @@ impl Authorization for AuthorizationHandler {
         if curve != header::ED25519 {
             return Err(Status::unauthenticated("curve not supported"));
         }
+        utils::middleware::validate_body_hash(&request)?;
+
         let svc_type = ServiceType::from_i32(request.get_ref().svc_type).ok_or(Status::invalid_argument("Invalid service type"))?;
         // TODO: enforce two fields are required. 
         let before = request.get_ref().before.map_or(Ok(SystemTime::now()), |t| {SystemTime::try_from(t).map_err(|e| Status::invalid_argument(format!("fail to parse before timestamp to SystemTime due to error {:?}", e)))})?;
