@@ -1,6 +1,6 @@
 use url::Url;
-use crate::dex::DexError;
-use crate::dex::get_headers;
+use super::DexError;
+use super::get_headers;
 use serde::Deserialize;
 use solana_sdk::bs58;
 

@@ -1,5 +1,6 @@
 pub mod quote;
 pub mod swap;
+pub mod errors;
 
 use thiserror::Error;
 use chrono::Utc;

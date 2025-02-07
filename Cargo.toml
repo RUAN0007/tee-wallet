@@ -5,7 +5,7 @@ members = [
     "crates/sig_server",
 	"crates/trace", 
 	"crates/utils",
-	"crates/limit_order",
+	"crates/okx_dex",
 ]
 
 resolver = "2"

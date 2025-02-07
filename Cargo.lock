@@ -3018,34 +3018,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "limit_order"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "base64 0.13.1",
- "bincode",
- "chrono",
- "config",
- "ctor",
- "hex",
- "hmac 0.12.1",
- "httpmock",
- "once_cell",
- "reqwest",
- "serde",
- "serde_json",
- "sha2 0.10.8",
- "solana-client",
- "solana-sdk",
- "thiserror 1.0.69",
- "tokio",
- "trace",
- "tracing",
- "url",
- "utils",
-]
-
-[[package]]
 name = "linked-hash-map"
 version = "0.5.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3481,6 +3453,34 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9bedf36ffb6ba96c2eb7144ef6270557b52e54b20c0a8e1eb2ff99a6c6959bff"
 dependencies = [
  "asn1-rs",
+]
+
+[[package]]
+name = "okx_dex"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "base64 0.13.1",
+ "bincode",
+ "chrono",
+ "config",
+ "ctor",
+ "hex",
+ "hmac 0.12.1",
+ "httpmock",
+ "once_cell",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "sha2 0.10.8",
+ "solana-client",
+ "solana-sdk",
+ "thiserror 1.0.69",
+ "tokio",
+ "trace",
+ "tracing",
+ "url",
+ "utils",
 ]
 
 [[package]]

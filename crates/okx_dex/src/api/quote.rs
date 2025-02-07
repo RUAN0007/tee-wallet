@@ -1,5 +1,5 @@
-use crate::dex::get_headers;
-use crate::dex::DexError;
+use super::get_headers;
+use super::errors::OkxDexError;
 use serde::Deserialize;
 use url::Url;
 
@@ -41,7 +41,7 @@ fn gen_url(host: &str, chain_id: u32, amount: u64, from_token_addr: &str, to_tok
     url
 }
 
-pub async fn get_quote(host: &str, chain_id: u32, amount: u64, from_token_addr: &str, to_token_addr: &str) -> Result<TokenAmount, DexError>{
+pub async fn get_quote(host: &str, chain_id: u32, amount: u64, from_token_addr: &str, to_token_addr: &str) -> Result<TokenAmount, OkxDexError>{
 	let url = gen_url(host, chain_id, amount, from_token_addr, to_token_addr);
     let req_path_with_query_str = url.path().to_string() + "?" + url.query().unwrap();
     let headers = get_headers("GET", &req_path_with_query_str);
@@ -53,20 +53,20 @@ pub async fn get_quote(host: &str, chain_id: u32, amount: u64, from_token_addr: 
         .await?;
         
 
-    let body = resp.text().await.map_err(|e| DexError::Other(format!("fail to get response body due to {}", e)))?;
+    let body = resp.text().await.map_err(|e| OkxDexError::ParseError(format!("fail to parse response body due to {}", e)))?;
 
     tracing::debug!("response_data: {:?}", body);
 
     let response: Response = serde_json::from_str(&body)?;
     if response.code != "0" {
-        return Err(DexError::RemoteError(response.code, response.msg));
+        return Err(OkxDexError::RemoteError(response.code, response.msg));
     }
     if response.data.len() == 0 {
-        return Err(DexError::Other("No data in response".to_string()));
+        return Err(OkxDexError::ParseError("No data in response".to_string()));
     }
     let response_data = &response.data[0];
-    let out_amount =  response_data.to_token_amount.parse::<u64>().map_err(|e| DexError::Other(format!("fail to parse to_token_amount due to {}", e)))?;
-    let decimal =  response_data.to_token.decimal.parse::<u8>().map_err(|e| DexError::Other(format!("fail to parse to_token.decimal due to {}", e)))?;
+    let out_amount =  response_data.to_token_amount.parse::<u64>().map_err(|e| OkxDexError::ParseError(format!("fail to parse to_token_amount due to {}", e)))?;
+    let decimal =  response_data.to_token.decimal.parse::<u8>().map_err(|e| OkxDexError::ParseError(format!("fail to parse to_token.decimal due to {}", e)))?;
 
     return Ok(TokenAmount {
         amount: out_amount,
@@ -101,6 +101,6 @@ mod tests {
 		let to_token_addr = "mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So"; // msol
         // Call the function
         let r = get_quote(crate::dex::HOST, invalid_chain_id, amount, from_token_addr, to_token_addr).await;
-        assert!(matches!(r, Err(DexError::RemoteError(code, message)) if code == "51000" && message == "Parameter chainId error"));
+        assert!(matches!(r, Err(OkxDexError::RemoteError(code, message)) if code == "51000" && message == "Parameter chainId error"));
     }
 }

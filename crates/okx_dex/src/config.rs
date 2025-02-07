@@ -14,14 +14,14 @@ pub struct DexConfig {
 }
 
 #[derive(Debug, Clone, Deserialize)]
-pub struct LimitOrderConfig {
+pub struct OkxDexConfig {
 	pub dex : DexConfig,
 	pub trace : TraceConfig,
 }
 
 // static LimitOrderConfig : config;
 
-impl LimitOrderConfig {
+impl OkxDexConfig {
     pub fn load(dir: &str) -> Result<Config, ConfigError> {
         let env = std::env::var("ENV").unwrap_or("default".into());
         Config::builder()
@@ -39,16 +39,16 @@ impl LimitOrderConfig {
 }
 
 
-pub static CONFIG: Lazy<RwLock<LimitOrderConfig>> = Lazy::new(|| {
-    RwLock::new(LimitOrderConfig::try_new().expect("Failed to load config"))
+pub static CONFIG: Lazy<RwLock<OkxDexConfig>> = Lazy::new(|| {
+    RwLock::new(OkxDexConfig::try_new().expect("Failed to load config"))
 });
 
 pub static _GUARDS : RwLock<Vec<WorkerGuard>> = RwLock::new(Vec::new()); // static lifetime to ensure the guards are not dropped
 
 pub fn must_init_with_path(cfg_path: &str) {
-    let cfg = LimitOrderConfig::load(&cfg_path)
+    let cfg = OkxDexConfig::load(&cfg_path)
     .expect(&format!("fail to load config file from {}", cfg_path).to_string());
-    let cfg : LimitOrderConfig = cfg.try_deserialize().expect(&format!("fail to deserialize from {}", cfg_path).to_string());
+    let cfg : OkxDexConfig = cfg.try_deserialize().expect(&format!("fail to deserialize from {}", cfg_path).to_string());
 
     *_GUARDS.write().unwrap() = init_tracing(cfg.trace.clone());
 
