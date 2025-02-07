@@ -3,30 +3,22 @@ mod tests {
 	use ed25519_dalek::SigningKey;
     use once_cell::sync::Lazy;
     use rsa::RsaPublicKey;
-    use sha2::digest::Key;
-    use solana_sdk::signer::SeedDerivable;
     use trace::init_tracing;
-    use utils::crypto::{encrypt, init_rsa_keypair};
-    use rsa::pkcs1::{DecodeRsaPublicKey, EncodeRsaPublicKey};
+    use utils::crypto::encrypt;
+    use rsa::pkcs1::DecodeRsaPublicKey;
 	use tonic::transport::Server;
     use tonic::Request;
     use tokio::sync::OnceCell;
-    use tonic::metadata::{MetadataValue, Ascii, Binary};
-    use std::str::FromStr;
     use std::sync::RwLock;
 	use sig_server::service::attestation_svc::{
 			attestation_server::AttestationServer, 
 			AttestationHandler};
-	use sig_server::service::test_svc::{
-			test_server::TestServer, 
-			TestHandler};
 	use sig_server::service::authorization_svc::{
 			authorization_server::AuthorizationServer, 
 			AuthorizationHandler};
 	use sig_server::service::signing_svc::{
 			signing_server::SigningServer, 
 			SigningHandler};
-    use sig_server::service::SIG_HEADER;
     use attestation_doc_validation::attestation_doc::decode_attestation_document;
     use attestation_client::AttestationClient;
     use authorization_client::AuthorizationClient;
@@ -47,8 +39,6 @@ mod tests {
     use prost_types::Timestamp;
 
     use serde_json::Value;
-
-    use okx_dex::config::CONFIG as OKX_CONFIG;
 
     tonic::include_proto!("attestation");
     tonic::include_proto!("authorization");
@@ -75,21 +65,21 @@ mod tests {
         let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
 
         tokio::spawn( async move {
-        let stream = tokio_stream::wrappers::TcpListenerStream::new(listener);
+            let stream = tokio_stream::wrappers::TcpListenerStream::new(listener);
 
-        let authorization_service = AuthorizationServer::new(AuthorizationHandler::default());
-        let auth_interceptor = utils::middleware::AuthInterceptor {};
+            let authorization_service = AuthorizationServer::new(AuthorizationHandler::default());
+            let auth_interceptor = utils::middleware::AuthInterceptor {};
 
-        let signing_handler = SigningHandler::new(&CONFIG.read().unwrap()).expect("fail to create signing handler");
-        let signing_service = SigningServer::new(signing_handler);
+            let signing_handler = SigningHandler::new(&CONFIG.read().unwrap()).expect("fail to create signing handler");
+            let signing_service = SigningServer::new(signing_handler);
 
-        Server::builder()
-            .add_service(AttestationServer::new(AttestationHandler::default()))
-            .add_service(InterceptorFor::new(authorization_service, auth_interceptor.clone()))
-            .add_service(InterceptorFor::new(signing_service, auth_interceptor.clone()))
-            .serve_with_incoming(stream)
-            .await
-            .unwrap();
+            Server::builder()
+                .add_service(AttestationServer::new(AttestationHandler::default()))
+                .add_service(InterceptorFor::new(authorization_service, auth_interceptor.clone()))
+                .add_service(InterceptorFor::new(signing_service, auth_interceptor.clone()))
+                .serve_with_incoming(stream)
+                .await
+                .unwrap();
         });
 	}
 
@@ -118,7 +108,17 @@ mod tests {
         SERVER.get_or_init(start_server).await;
 
         // 1. Parse attestation document to retrieve the TEE public key
-        let url  = format!("http://{}:{}", HOST, PORT);
+        let url = {
+            if let Ok(url) = env::var("SIG_SERVER_URL") {
+                dialoguer::Confirm::new()
+                    .with_prompt(format!("Do you want to use the url: {}?", url))
+                    .interact()
+                    .unwrap();
+                url
+            } else {
+                format!("http://{}:{}", HOST, PORT)
+            }
+        };
         let mut attestation_cli = AttestationClient::connect(url.clone()).await.unwrap();
         let nonce = vec![1, 2, 3];
         let request = Request::new(AttestationReq {
