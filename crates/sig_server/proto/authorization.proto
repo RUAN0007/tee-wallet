@@ -15,6 +15,7 @@ enum KeyType {
 
 service Authorization {
     rpc Authorize (AuthorizationReq) returns (AuthorizationResp);
+    rpc GetAuthorizationRecords (GetAuthRecordsReq) returns (GetAuthRecordsResp);
 }
 
 message AuthorizationReq {
@@ -30,3 +31,28 @@ message AuthorizationReq {
 message AuthorizationResp {
   uint64 id = 1; 
 }
+
+message AuthorizationRecord {
+  uint64 id = 1; 
+  ServiceType svc_type = 2;
+  google.protobuf.Timestamp start_at = 3; 
+  google.protobuf.Timestamp end_at = 4; 
+  string condition = 5;
+  string action = 6;
+}
+
+message GetAuthRecordsReq {
+  uint32 page_num = 1; 
+  uint32 page_size = 2; 
+  google.protobuf.Timestamp after = 3; 
+  google.protobuf.Timestamp before = 4; 
+  ServiceType svc_type = 5;
+  string condition = 6;
+  string action = 7;
+}
+
+message GetAuthRecordsResp {
+  repeated AuthorizationRecord records = 1;
+}
+
+

@@ -25,7 +25,7 @@ use crate::service::SIG_HEADER;
 use std::collections::HashMap;
 use crate::config::SigServerConfig;
 use solana_sdk::bs58;
-use utils::middleware::header;
+use utils::middleware::{header, ed25519_pk_from_header};
 
 tonic::include_proto!("signing");
 
@@ -70,19 +70,8 @@ impl Signing for SigningHandler {
         &self,
         request: Request<SolanaSignReq>,
     ) -> Result<Response<SolanaSignResp>, Status> {
-        let curve = request.metadata().get(header::CURVE).ok_or(Status::unauthenticated("No curve"))?.to_str().map_err(|e| Status::unauthenticated(format!("Invalid curve due to error {:?}", e)))?;
-
-        if curve != header::ED25519 {
-            return Err(Status::unauthenticated("curve other than ed25519 not supported"));
-        }
-
         utils::middleware::validate_body_hash(&request)?;
-
-        let svc_pk_in_header = request.metadata().get(header::PUBKEY).ok_or(Status::unauthenticated("No pub key"))?.to_str().map_err(|e| Status::unauthenticated(format!("Invalid pub key due to error {:?}", e)))?;
-
-        let svc_pk = bs58::decode(svc_pk_in_header).into_vec().map_err(|e| Status::unauthenticated(format!("Fail to decode base58 encoded public key due to error {:?}", e)))?;
-        let svc_pk : [u8;32] = svc_pk.as_slice().try_into().map_err(|e| Status::unauthenticated(format!("Fail to convert base58 decoded public key to array due to error {:?}", e)))?;
-        let svc_pk = VerifyingKey::from_bytes(&svc_pk).map_err(|e| Status::unauthenticated(format!("Fail to create ed25519 verifying key from bytes due to error {:?}", e)))?;
+        let svc_pk = ed25519_pk_from_header(&request)?;
 
         let svc_type = self.trusted_svcs.get(&svc_pk).ok_or(Status::invalid_argument("Service not trusted"))?;
 

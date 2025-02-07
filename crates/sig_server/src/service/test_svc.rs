@@ -85,12 +85,12 @@ mod tests {
 	tonic::include_proto!("attestation");
 	tonic::include_proto!("test");
 
-	const URL : &str = "http://127.0.0.1:50051";
+	const URL : &str = "http://127.0.0.1:50052";
 
     static SERVER : OnceCell<()> = OnceCell::const_new();
 
     async fn start_server() {
-		const ADDR : &str = "127.0.0.1:50051";
+		const ADDR : &str = "127.0.0.1:50052";
         let listener = tokio::net::TcpListener::bind(ADDR).await.unwrap();
 
         tokio::spawn( async move {

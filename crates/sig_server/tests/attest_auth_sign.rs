@@ -43,7 +43,7 @@ mod tests {
     tonic::include_proto!("sign");
 
     const HOST : &str = "127.0.0.1";
-    const PORT : u16 = 50051;
+    const PORT : u16 = 50053; // must be diff between each test case
 
     static SERVER : OnceCell<()> = OnceCell::const_new();
 

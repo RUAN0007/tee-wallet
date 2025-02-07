@@ -9,6 +9,8 @@ use tonic::body::BoxBody;
 use tonic::codegen::http::{HeaderValue, Request, Response};
 use ed25519_dalek::{Verifier, VerifyingKey};
 
+use crate::crypto;
+
 pub mod header {
 	pub static SIGNATURE: &str = "x-signature";
 	pub static PUBKEY: &str = "x-pubkey";
@@ -58,4 +60,23 @@ pub fn validate_body_hash<T : prost::Message> (request : &tonic::Request<T>) -> 
         return Err(Status::unauthenticated("Body hash mismatch"));
     }
     Ok(())
+}
+
+pub fn ed25519_pk_from_header<T : prost::Message> (request : &tonic::Request<T>) -> Result<VerifyingKey, tonic::Status> {
+	let curve = request.metadata().get(header::CURVE).ok_or(Status::unauthenticated("No curve"))?.to_str().map_err(|e| Status::unauthenticated(format!("Invalid curve due to error {:?}", e)))?;
+
+	if curve != header::ED25519 {
+		return Err(Status::unauthenticated("not ed25519 curive"));
+	}
+
+	let user_pk_in_header = request.metadata().get(header::PUBKEY).ok_or(Status::unauthenticated("No pub key"))?.to_str().map_err(|e| Status::unauthenticated(format!("Invalid pub key due to error {:?}", e)))?;
+	let user_pk_vec = bs58::decode(user_pk_in_header).into_vec().map_err(|e| Status::unauthenticated(format!("Fail to decode base58 encoded public key due to error {:?}", e)))?;
+	let user_pk : [u8;32] = user_pk_vec.as_slice().try_into().map_err(|_| Status::unauthenticated("Invalid public key length"))?;
+	let user_pk = VerifyingKey::from_bytes(&user_pk).map_err(|e| Status::unauthenticated(format!("Fail to create ed25519 verifying key from bytes due to error {:?}", e)))?;
+	Ok(user_pk)
+}
+
+pub fn addr_from_header<T : prost::Message> (request : &tonic::Request<T>) -> Result<String, tonic::Status> {
+	let user_pk = ed25519_pk_from_header(request)?;
+	Ok(crypto::ed25519_pk_to_addr(&user_pk))
 }

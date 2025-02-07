@@ -4,9 +4,11 @@ use std::hash::DefaultHasher;
 use std::collections::{HashMap, BTreeMap};
 use std::sync::RwLock;
 use once_cell::sync::Lazy;
+use solana_sdk::signer::SignerError;
 use crate::errors::SigServerError;
 use crate::service::authorization_svc::ServiceType;
 use crate::service::authorization_svc::KeyType;
+use crate::service::authorization_svc::AuthorizationRecord;
 
 #[derive(Hash, Clone, Debug, PartialEq)]
 pub struct AuthRecord {
@@ -28,7 +30,19 @@ impl AuthRecord {
 		self.hash(&mut hasher); // Hash the struct
 		hasher.finish()
 	}
+}
 
+impl From<AuthRecord> for AuthorizationRecord {
+    fn from(auth_record: AuthRecord) -> Self {
+        AuthorizationRecord {
+            id : auth_record.id(),
+            svc_type: auth_record.svc_type.into(),
+            start_at: Some(auth_record.start_at.into()),
+            end_at: Some(auth_record.end_at.into()),
+            condition: auth_record.condition,
+            action: auth_record.action,
+        }
+    }
 }
 
 pub static AUTH_REGISTRY: Lazy<RwLock<AuthRegistry>> = Lazy::new(|| RwLock::new(AuthRegistry::new()));
@@ -36,6 +50,18 @@ pub static AUTH_REGISTRY: Lazy<RwLock<AuthRegistry>> = Lazy::new(|| RwLock::new(
 pub struct AuthRegistry {
 	records : HashMap<AuthID, AuthRecord>,
 	user_records_by_end_at : HashMap<String, BTreeMap<SystemTime, AuthID>>
+}
+
+pub struct SearchParams {
+    pub addr : String,
+    pub after : SystemTime,
+    pub before : SystemTime, 
+    pub svc_type : ServiceType,
+    pub condition : String,
+    pub action : String,
+
+    pub page_num : u32,
+    pub page_size : u32,
 }
 
 impl AuthRegistry {
@@ -61,6 +87,19 @@ impl AuthRegistry {
 			})
 		})
 	}
+
+    pub fn search_by_params(&self, params: &SearchParams) -> Result<Vec<AuthRecord>, SigServerError> {
+        let mut result = Vec::new();
+        if let Some(records) = self.user_records_by_end_at.get(&params.addr) {
+            for (_end_at, id) in records.range(params.after..params.before) {
+                if let Some(record) = self.records.get(id) {
+                    result.push(record.clone());
+                }
+            }
+        }
+
+        Ok(result)
+    }
 }
 
 #[cfg(test)]
