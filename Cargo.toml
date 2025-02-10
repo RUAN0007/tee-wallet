@@ -6,6 +6,7 @@ members = [
 	"crates/trace", 
 	"crates/utils",
 	"crates/okx_dex",
+	"crates/scraper"
 ]
 
 resolver = "2"
@@ -58,4 +59,4 @@ secp256k1 = "0.30.0"
 sha3 = "0.10"
 tonic-middleware = "0.2.3"
 dialoguer = "0.11.0"
-
+twitter-v2 = "0.1.8"
