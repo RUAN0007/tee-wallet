@@ -173,7 +173,7 @@ mod tests {
             nanos: 0,
         };
         let auth_req = AuthorizationReq {
-            svc_type: ServiceType::CopyTrading as i32, // 1
+            strategy: Strategy::CopyTrading as i32, // 1
             start_at : Some(start_at),
             end_at : Some(end_at),
             action: "".to_owned(),

@@ -12,7 +12,7 @@ pub struct EnclaveConfig {
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct TrustedServiceIdentity {
-    pub svc_type : String,
+    pub strategy : String,
     pub pub_key : String, // base58 encoded ed25519 public key
 }
 

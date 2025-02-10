@@ -51,11 +51,11 @@ impl Authorization for AuthorizationHandler {
         let end_at : SystemTime = SystemTime::try_from(end_at).map_err(|e| Status::invalid_argument(format!("fail to parse start_at timestamp to SystemTime due to error {:?}", e)))?;
 
         
-        let svc_type = ServiceType::try_from(request.get_ref().svc_type).map_err(|_| Status::invalid_argument("Invalid service type"))?;
+        let strategy = Strategy::try_from(request.get_ref().strategy).map_err(|_| Status::invalid_argument("Invalid service type"))?;
 
         let auth_record = AuthRecord {
             addr: addr,
-            svc_type: svc_type, 
+            strategy: strategy, 
             start_at: start_at,
             end_at: end_at,
             condition: request.get_ref().condition.clone(),
@@ -84,7 +84,7 @@ impl Authorization for AuthorizationHandler {
         }
         utils::middleware::validate_body_hash(&request)?;
 
-        let svc_type = ServiceType::try_from(request.get_ref().svc_type).map_err(|_| Status::invalid_argument("Invalid service type"))?;
+        let strategy = Strategy::try_from(request.get_ref().strategy).map_err(|_| Status::invalid_argument("Invalid service type"))?;
         // TODO: enforce two fields are required. 
         let before = request.get_ref().before.map_or(Ok(SystemTime::now()), |t| {SystemTime::try_from(t).map_err(|e| Status::invalid_argument(format!("fail to parse before timestamp to SystemTime due to error {:?}", e)))})?;
         let after = request.get_ref().after.map_or(Ok(SystemTime::now()), |t| {SystemTime::try_from(t).map_err(|e| Status::invalid_argument(format!("fail to parse before timestamp to SystemTime due to error {:?}", e)))})?;
@@ -98,7 +98,7 @@ impl Authorization for AuthorizationHandler {
             condition: request.get_ref().condition.clone(),
             page_num: request.get_ref().page_num,
             page_size: request.get_ref().page_size,
-            svc_type: svc_type,
+            strategy: strategy,
         };
         let auth_records = {
             let r = AUTH_REGISTRY.read().map_err(|e| Status::internal(format!("Fail to get rlock AUTH_REGISTRY due to error {:?}", e)))?;

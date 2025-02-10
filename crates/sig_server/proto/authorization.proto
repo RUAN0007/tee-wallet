@@ -3,7 +3,7 @@ package authorization;
 
 import "google/protobuf/timestamp.proto";
 
-enum ServiceType {
+enum Strategy {
     LIMIT_ORDER = 0;
     COPY_TRADING = 1;
 }
@@ -19,7 +19,7 @@ service Authorization {
 }
 
 message AuthorizationReq {
-  ServiceType svc_type = 1;
+  Strategy strategy = 1;
   google.protobuf.Timestamp start_at = 2; 
   google.protobuf.Timestamp end_at = 3; 
   string condition = 4;
@@ -34,7 +34,7 @@ message AuthorizationResp {
 
 message AuthorizationRecord {
   uint64 id = 1; 
-  ServiceType svc_type = 2;
+  Strategy strategy = 2;
   google.protobuf.Timestamp start_at = 3; 
   google.protobuf.Timestamp end_at = 4; 
   string condition = 5;
@@ -46,7 +46,7 @@ message GetAuthRecordsReq {
   uint32 page_size = 2; 
   google.protobuf.Timestamp after = 3; 
   google.protobuf.Timestamp before = 4; 
-  ServiceType svc_type = 5;
+  Strategy strategy = 5;
   string condition = 6;
   string action = 7;
 }

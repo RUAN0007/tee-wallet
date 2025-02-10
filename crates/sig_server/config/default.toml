@@ -16,7 +16,7 @@ remote_cid = 3
 remote_port = 9002
 
 [[enclave.trusted_services]]
-svc_type = "COPY_TRADING"
+strategy = "COPY_TRADING"
 pub_key = "C7JsiaoVK87xAZXLrhoFW8pu2XwweDB8cJHGbxyW2dCT"
 
 [host]

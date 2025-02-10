@@ -5,14 +5,14 @@ use std::collections::{HashMap, BTreeMap};
 use std::sync::RwLock;
 use once_cell::sync::Lazy;
 use crate::errors::SigServerError;
-use crate::service::authorization_svc::ServiceType;
+use crate::service::authorization_svc::Strategy;
 use crate::service::authorization_svc::KeyType;
 use crate::service::authorization_svc::AuthorizationRecord;
 
 #[derive(Hash, Clone, Debug, PartialEq)]
 pub struct AuthRecord {
 	pub addr: String,
-	pub svc_type: ServiceType,
+	pub strategy: Strategy,
 	pub start_at : SystemTime,	
 	pub end_at : SystemTime,
 	pub condition : String,
@@ -35,7 +35,7 @@ impl From<AuthRecord> for AuthorizationRecord {
     fn from(auth_record: AuthRecord) -> Self {
         AuthorizationRecord {
             id : auth_record.id(),
-            svc_type: auth_record.svc_type.into(),
+            strategy: auth_record.strategy.into(),
             start_at: Some(auth_record.start_at.into()),
             end_at: Some(auth_record.end_at.into()),
             condition: auth_record.condition,
@@ -55,7 +55,7 @@ pub struct SearchParams {
     pub addr : String,
     pub after : SystemTime,
     pub before : SystemTime, 
-    pub svc_type : ServiceType,
+    pub strategy : Strategy,
     pub condition : String,
     pub action : String,
 
@@ -79,7 +79,7 @@ impl AuthRegistry {
 	}
     
     #[allow(unused_variables)]
-	pub fn search(&self, addr : &str, svc_type : ServiceType, condition : &str, action : &str) -> Option<AuthRecord> {
+	pub fn search(&self, addr : &str, strategy : Strategy, condition : &str, action : &str) -> Option<AuthRecord> {
 		let now = SystemTime::now();
 		self.user_records_by_end_at.get(addr).and_then(|records| {
 			records.range(now..).next().and_then(|(_, id)| {
@@ -107,9 +107,9 @@ mod tests {
     use super::*;
     use std::time::{Duration, SystemTime};
 
-    fn create_test_record(addr: &str, svc_type: ServiceType, start_at: SystemTime, end_at: SystemTime) -> AuthRecord {
+    fn create_test_record(addr: &str, strategy: Strategy, start_at: SystemTime, end_at: SystemTime) -> AuthRecord {
         AuthRecord {
-            svc_type,
+            strategy,
             start_at,
             end_at,
             condition: String::from("test_condition"),
@@ -130,10 +130,10 @@ mod tests {
     #[test]
     fn test_add() {
         let mut registry = AuthRegistry::new();
-        let svc_type = ServiceType::LimitOrder;
+        let strategy = Strategy::LimitOrder;
         let start_at = SystemTime::now();
         let end_at = start_at + Duration::from_secs(3600);
-        let record = create_test_record("test_addr", svc_type, start_at, end_at);
+        let record = create_test_record("test_addr", strategy, start_at, end_at);
 
         let id = registry.add(record.clone()).unwrap();
         assert_eq!(registry.records.len(), 1);
@@ -144,13 +144,13 @@ mod tests {
     #[test]
     fn test_search() {
         let mut registry = AuthRegistry::new();
-        let svc_type = ServiceType::LimitOrder;
+        let strategy = Strategy::LimitOrder;
         let start_at = SystemTime::now();
         let end_at = start_at + Duration::from_secs(3600);
-        let record = create_test_record("test_addr", svc_type, start_at, end_at);
+        let record = create_test_record("test_addr", strategy, start_at, end_at);
 
         registry.add(record.clone()).unwrap();
-        let result = registry.search("test_addr", svc_type, "test_condition", "test_action");
+        let result = registry.search("test_addr", strategy, "test_condition", "test_action");
         assert!(result.is_some());
         assert_eq!(result.unwrap(), record);
     }
@@ -158,8 +158,8 @@ mod tests {
     #[test]
     fn test_search_no_result() {
         let registry = AuthRegistry::new();
-        let svc_type = ServiceType::LimitOrder;
-        let result = registry.search("non_existent_addr", svc_type, "test_condition", "test_action");
+        let strategy = Strategy::LimitOrder;
+        let result = registry.search("non_existent_addr", strategy, "test_condition", "test_action");
         assert!(result.is_none());
     }
 }

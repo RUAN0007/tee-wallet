@@ -1,7 +1,7 @@
 
 use tonic::{Request, Response, Status};
 use crate::service::signing_svc::signing_server::Signing;
-use crate::service::authorization_svc::ServiceType;
+use crate::service::authorization_svc::Strategy;
 use crate::errors::SigServerError;
 use crate::service::auth_registry::AUTH_REGISTRY;
 
@@ -21,7 +21,7 @@ tonic::include_proto!("signing");
 
 #[derive(Debug, Default)]
 pub struct SigningHandler {
-    trusted_svcs: HashMap<VerifyingKey, ServiceType>,
+    trusted_svcs: HashMap<VerifyingKey, Strategy>,
 }
 
 impl SigningHandler {
@@ -41,11 +41,11 @@ impl SigningHandler {
                 SigServerError::ConfigParameterError("trusted_services.pub_key".to_string(), format!("Fail to create ed25519 verifying key from bytes due to error {:?}", e).to_string())
             })?;
 
-            let svc_type = ServiceType::from_str_name(&trusted_svc.svc_type).ok_or_else(|| {
-                SigServerError::ConfigParameterError("trusted_services.svc_type".to_string(), format!("Fail to parse service type {}", trusted_svc.svc_type).to_string())
+            let strategy = Strategy::from_str_name(&trusted_svc.strategy).ok_or_else(|| {
+                SigServerError::ConfigParameterError("trusted_services.strategy".to_string(), format!("Fail to parse service type {}", trusted_svc.strategy).to_string())
             })?;
 
-            trusted_svcs.insert(pub_key, svc_type);
+            trusted_svcs.insert(pub_key, strategy);
         }
 
         Ok(Self {
@@ -63,13 +63,13 @@ impl Signing for SigningHandler {
         utils::middleware::validate_body_hash(&request)?;
         let svc_pk = ed25519_pk_from_header(&request)?;
 
-        let svc_type = self.trusted_svcs.get(&svc_pk).ok_or(Status::invalid_argument("Service not trusted"))?;
+        let strategy = self.trusted_svcs.get(&svc_pk).ok_or(Status::invalid_argument("Service not trusted"))?;
 
         let user_addr = request.get_ref().user_addr.clone();
         let auth_record = {
             let r = AUTH_REGISTRY.read().map_err(|e| Status::internal(format!("Fail to get rlock AUTH_REGISTRY due to error {:?}", e)))?;
 
-            r.search(&user_addr, *svc_type, "", "").ok_or(Status::unauthenticated("User not authorized"))?
+            r.search(&user_addr, *strategy, "", "").ok_or(Status::unauthenticated("User not authorized"))?
         };
 
         let current_time = SystemTime::now();
