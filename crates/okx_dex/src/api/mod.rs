@@ -41,23 +41,6 @@ pub fn get_headers(method : &str, req_path_with_query_str: &str) -> HeaderMap {
     headers
 }
 
-#[derive(Error, Debug)]
-pub enum DexError {
-    #[error("Network request failed")]
-    NetworkError(#[from] reqwest::Error),
-    
-    #[error("Error Response from DEX Remote Host: error code {0}, message: {1}")]
-    RemoteError(String, String),
-    
-    #[error("unmarshal json error: {0}")]
-    UnmarshalError(#[from] serde_json::Error),
-
-    #[error("bs58 decode error: {0}")]
-    Bs58DecodeError(#[from] solana_sdk::bs58::decode::Error),
-
-    #[error("Other error: {0}")]
-    Other(String),
-}
 
 #[cfg(test)]
 mod tests {

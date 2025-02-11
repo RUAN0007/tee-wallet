@@ -43,7 +43,6 @@ impl Authorization for AuthorizationHandler {
             return Err(Status::unauthenticated("Public key mismatch"));
         }
 
-
         let start_at = request.get_ref().start_at
         .map_or(Ok(SystemTime::now()), |t| {SystemTime::try_from(t).map_err(|e| Status::invalid_argument(format!("fail to parse start_at timestamp to SystemTime due to error {:?}", e)))})?;
 

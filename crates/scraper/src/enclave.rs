@@ -121,6 +121,13 @@ pub async fn start(cfg : ScraperConfig) -> Result<(), ScraperError> {
         });
     }
 
+    let scraping_interval = std::time::Duration::from_secs(cfg.enclave.twitter.polling_interval_sec);
+    let mut scraper_runner = crate::core::scraping_runner::ScrapingRunner::new("https://api.mainnet-beta.solana.com");
+
+    join_set.spawn(async move {
+        scraper_runner.run(scraping_interval).await
+    });
+
     join_set.spawn(async move {
         tracing::info!(
             "start to launch the signing server on enclave with config: {:?} and ed25519 pub key {:?}",
@@ -137,7 +144,6 @@ pub async fn start(cfg : ScraperConfig) -> Result<(), ScraperError> {
 
         _ = s.serve_with_incoming(incoming).await.unwrap();
     });
-
 
     // wait for all the proxies and grpc server to finish, which shall never happen
     while let Some(res) = join_set.join_next().await {

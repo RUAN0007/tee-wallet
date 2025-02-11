@@ -15,4 +15,8 @@ pub enum ScraperError {
     ListenerJoinError(#[from] tokio::task::JoinError),
     #[error("invalid config parameter {0}, error: {1}")]
     ConfigParameterError(String, String),
+    #[error("twitter error, {0}")]
+    TwitterError(#[from] twitter_v2::Error),
+    #[error("okx dex error, {0}")]
+    OkxDexError(#[from] okx_dex::api::errors::OkxDexError),
 }

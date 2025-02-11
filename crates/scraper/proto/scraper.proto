@@ -12,6 +12,7 @@ message ScrapeTwitterReq {
 	string username = 1;
 	google.protobuf.Timestamp start_at = 2; 
 	google.protobuf.Timestamp end_at = 3;
+	string wallet_addr = 4;
 }
 
 message ScrapeTwitterResp {
@@ -19,19 +20,20 @@ message ScrapeTwitterResp {
 }
 
 message GetTwitterScrapingRecordsReq {
-	uint64 id = 1;
+	uint64 original_req_id = 1;
 }
 
 message GetTwitterScrapingRecordsResp {
 	ScrapeTwitterReq original_req = 1;
-	repeated ScrapingRecord records = 2;
+	repeated TwitterScrapingRecord records = 2;
 }
 
-message ScrapingRecord {
+message TwitterScrapingRecord {
 	uint64 tweet_id = 1;
 	uint32 chain_id = 2;
 	string from_token_addr = 3;
 	string to_token_addr = 4;
 	uint64 from_amount = 5;
 	string txn_id = 6;
+	google.protobuf.Timestamp txn_ts = 7;
 }

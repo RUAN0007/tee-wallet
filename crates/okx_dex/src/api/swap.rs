@@ -1,5 +1,5 @@
 use url::Url;
-use super::DexError;
+use super::errors::OkxDexError;
 use super::get_headers;
 use serde::Deserialize;
 use solana_sdk::bs58;
@@ -37,7 +37,7 @@ fn gen_url(host: &str, chain_id: u32, amount: u64, from_token_addr: &str, to_tok
     url
 }
 
-pub async fn get_swap_txn_data(host: &str, chain_id: u32, amount: u64, from_token_addr: &str, to_token_addr: &str, slippage: &str, user_wallet_addr: &str) -> Result<Vec<u8>, DexError>{
+pub async fn get_swap_txn_data(host: &str, chain_id: u32, amount: u64, from_token_addr: &str, to_token_addr: &str, slippage: &str, user_wallet_addr: &str) -> Result<Vec<u8>, OkxDexError>{
 	let url = gen_url(host, chain_id, amount, from_token_addr, to_token_addr, slippage, user_wallet_addr);
 
     let req_path_with_query_str = url.path().to_string() + "?" + url.query().unwrap();
@@ -50,16 +50,16 @@ pub async fn get_swap_txn_data(host: &str, chain_id: u32, amount: u64, from_toke
         .await?;
         
 
-    let body = resp.text().await.map_err(|e| DexError::Other(format!("fail to get response body due to {}", e)))?;
+    let body = resp.text().await.map_err(|e| OkxDexError::Other(format!("fail to get response body due to {}", e)))?;
     tracing::debug!("addr: {:?}", user_wallet_addr);
     tracing::debug!("response body: {:?}", body);
 
     let response: Response = serde_json::from_str(&body)?;
     if response.code != "0" {
-        return Err(DexError::RemoteError(response.code, response.msg));
+        return Err(OkxDexError::RemoteError(response.code, response.msg));
     }
     if response.data.len() == 0 {
-        return Err(DexError::Other("No data in response".to_string()));
+        return Err(OkxDexError::Other("No data in response".to_string()));
     }
     let response_data = &response.data[0];
 	let decoded_data = bs58::decode(&response_data.tx.data).into_vec()?;
@@ -103,7 +103,7 @@ mod tests {
 
         let r = get_swap_txn_data(crate::api::HOST, invalid_chain_id, amount, from_token_addr, to_token_addr, slippage, &addr).await;
 
-        assert!(matches!(r, Err(DexError::RemoteError(code, message)) if code == "51000" && message == "Parameter chainId error"));
+        assert!(matches!(r, Err(OkxDexError::RemoteError(code, message)) if code == "51000" && message == "Parameter chainId error"));
     }
 
 

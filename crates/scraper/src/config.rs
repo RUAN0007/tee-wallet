@@ -8,6 +8,7 @@ pub struct EnclaveConfig {
     pub cid : u32,
     pub tcp_proxies: Vec<TcpProxyConfig>,
 	pub twitter: TwitterConfig,
+    pub okx_dex : okx_dex::config::OkxDexConfig,
 }
 
 #[derive(Debug, Clone, Deserialize)]

@@ -3,3 +3,4 @@ log/
 target/
 *pem
 *local*
+.DS_Store

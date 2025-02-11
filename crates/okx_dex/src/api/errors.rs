@@ -13,4 +13,10 @@ pub enum OkxDexError {
 
     #[error("JSON Parsing error occurred, {0}")]
     JsonParseError(#[from] serde_json::Error),
+
+    #[error("bs58 decoding error occurred, {0}")]
+    Bs58DecodingError(#[from] solana_sdk::bs58::decode::Error),
+
+    #[error("other error occurred, {0}")]
+    Other(String),
 }
