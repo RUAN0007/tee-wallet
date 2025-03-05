@@ -14,6 +14,10 @@ tracing = { workspace = true }
 chrono = "0.4"
 hickory-resolver = "0.24"
 idna = "1.0.3"
+serde = {workspace = true}
+clap = {workspace = true}
+tonic = {workspace = true}
+config = {workspace = true}
 
 [target.x86_64-unknown-linux-gnu.dependencies]
 tokio-vsock = {workspace = true}

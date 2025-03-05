@@ -1,13 +1,16 @@
 use serde::Deserialize;
 use config::{Config, ConfigError, File};
 use trace::TraceConfig;
+use std::sync::RwLock;
+use trace::WorkerGuard;
+use trace::init_tracing;
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct EnclaveConfig {
     pub grpc: GrpcConfig,
     pub cid : u32,
     pub tcp_proxies: Vec<TcpProxyConfig>,
-    pub trusted_services: Vec<TrustedServiceIdentity>,
+    // pub trusted_services: Vec<TrustedServiceIdentity>,
 }
 
 #[derive(Debug, Clone, Deserialize)]

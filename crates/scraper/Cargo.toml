@@ -6,7 +6,7 @@ license.workspace = true
 keywords.workspace = true
 
 [[bin]]
-name = "sig_server"
+name = "scraper"
 path = "src/bin/main.rs"
 
 [dependencies]

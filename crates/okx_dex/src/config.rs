@@ -48,7 +48,7 @@ fn init() {
 
     *_GUARDS.write().unwrap() = trace::init_tracing(trace::TraceConfig{
         prefix: "okx_dex".to_string(),
-        dir: "logs".to_string(),
+        dir: "log".to_string(),
         level: tracing::Level::DEBUG,
         console: true,
         flame: false,

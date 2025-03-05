@@ -1,0 +1,28 @@
+[[tcp_proxies]]
+local_tcp_port = 8080
+remote_cid = 10
+remote_port = 9001
+
+[[tcp_proxies]]
+local_tcp_port = 8081
+remote_cid = 10
+remote_port = 9002
+
+[[vsock_proxies]]
+local_vsock_cid = 3
+local_vsock_port = 9001
+remote_host = "example.com"
+remote_port = 8080
+
+[[vsock_proxies]]
+local_vsock_cid = 3
+local_vsock_port = 9002
+remote_host = "localhost"
+remote_port = 8081
+
+[trace]
+prefix = "proxy"
+dir = "logs/"
+level = "debug"
+console = true
+flame = false

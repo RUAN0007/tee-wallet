@@ -28,25 +28,25 @@ impl SigningHandler {
     pub fn new(cfg : &SigServerConfig) -> Result<Self, SigServerError> {
         let mut trusted_svcs =  HashMap::new();
 
-        for trusted_svc in cfg.enclave.trusted_services.iter() {
-            let pub_key : Vec<u8> = bs58::decode(&trusted_svc.pub_key).into_vec().map_err(|e| {
-                SigServerError::ConfigParameterError("trusted_services.pub_key".to_string(), format!("Fail to decode base58 encoded public key {} due to error {:?}", trusted_svc.pub_key, e).to_string())
-            })?;
+        // for trusted_svc in cfg.enclave.trusted_services.iter() {
+        //     let pub_key : Vec<u8> = bs58::decode(&trusted_svc.pub_key).into_vec().map_err(|e| {
+        //         SigServerError::ConfigParameterError("trusted_services.pub_key".to_string(), format!("Fail to decode base58 encoded public key {} due to error {:?}", trusted_svc.pub_key, e).to_string())
+        //     })?;
 
-            let pub_key : [u8;32] = pub_key.as_slice().try_into().map_err(|e| {
-                SigServerError::ConfigParameterError("trusted_services.pub_key".to_string(), format!("Fail to convert base58 decoded public key to array due to error {:?}", e).to_string())
-            })?;
+        //     let pub_key : [u8;32] = pub_key.as_slice().try_into().map_err(|e| {
+        //         SigServerError::ConfigParameterError("trusted_services.pub_key".to_string(), format!("Fail to convert base58 decoded public key to array due to error {:?}", e).to_string())
+        //     })?;
 
-            let pub_key = VerifyingKey::from_bytes(&pub_key).map_err(|e| {
-                SigServerError::ConfigParameterError("trusted_services.pub_key".to_string(), format!("Fail to create ed25519 verifying key from bytes due to error {:?}", e).to_string())
-            })?;
+        //     let pub_key = VerifyingKey::from_bytes(&pub_key).map_err(|e| {
+        //         SigServerError::ConfigParameterError("trusted_services.pub_key".to_string(), format!("Fail to create ed25519 verifying key from bytes due to error {:?}", e).to_string())
+        //     })?;
 
-            let strategy = Strategy::from_str_name(&trusted_svc.strategy).ok_or_else(|| {
-                SigServerError::ConfigParameterError("trusted_services.strategy".to_string(), format!("Fail to parse service type {}", trusted_svc.strategy).to_string())
-            })?;
+        //     let strategy = Strategy::from_str_name(&trusted_svc.strategy).ok_or_else(|| {
+        //         SigServerError::ConfigParameterError("trusted_services.strategy".to_string(), format!("Fail to parse service type {}", trusted_svc.strategy).to_string())
+        //     })?;
 
-            trusted_svcs.insert(pub_key, strategy);
-        }
+        //     trusted_svcs.insert(pub_key, strategy);
+        // }
 
         Ok(Self {
             trusted_svcs

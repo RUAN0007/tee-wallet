@@ -8,6 +8,8 @@ pub mod tcp2tcp;
 
 pub mod dns;
 
+pub mod config;
+
 mod traffic;
 
 #[derive(Copy, Clone, PartialEq, Debug)]
