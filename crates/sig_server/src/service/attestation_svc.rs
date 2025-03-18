@@ -10,6 +10,17 @@ use aws_nitro_enclaves_nsm_api::driver::{nsm_exit, nsm_init, nsm_process_request
 use serde_bytes::ByteBuf;
 use std::time::Instant;
 
+use hpke::{
+    aead::AesGcm256,
+    kdf::HkdfSha256,
+    kem::X25519HkdfSha256,
+    Deserializable, Kem as KemTrait, OpModeR, OpModeS, Serializable,
+};
+
+type Kem = X25519HkdfSha256;
+type Aead = AesGcm256;
+type Kdf = HkdfSha256;
+
 tonic::include_proto!("attestation");
 
 #[derive(Debug, Default)]
@@ -28,10 +39,17 @@ impl Attestation for AttestationHandler {
         if ctx == 0 {
             return Err(Status::internal("NSM initialization failed"));
         }
-        let user_data = Some(ByteBuf::from("abc"));
         let nonce = Some(ByteBuf::from("456"));
+        // let user_data = Some(ByteBuf::from("abc"));
         let signing_key = hex::decode(utils::TEST_ED25519_SVC_SK_HEX).unwrap();
         let signing_key : [u8;32] = signing_key.try_into().unwrap();
+
+        let sk = <Kem as KemTrait>::PrivateKey::from_bytes(&signing_key).unwrap();
+        let hpke_pk = <Kem as KemTrait>::sk_to_pk(&sk);
+        let hpke_pk = hpke_pk.to_bytes();
+        let hpke_pk : [u8;32]= hpke_pk.into();
+        let user_data = Some(ByteBuf::from(&hpke_pk));
+
         let sk = ed25519_dalek::SigningKey::from_bytes(&signing_key);
         let pk = sk.verifying_key();
         let pk = Some(ByteBuf::from(pk.as_bytes()));
